@@ -11,9 +11,11 @@ constructing rule based systems using relational databases.
 
 * GNU Guile - ver 2.0. or newer ( https://www.gnu.org/software/guile/ )
 
-* guile-dbi - 
+* guile-dbi - ( https://github.com/eestrada/guile-dbi )
 
-* Any relational database supported by guile-dbi.
+* guile-dbd-sqlite3 - ( https://github.com/eestrada/guile-dbi )
+
+* Sqlite3 - ( https://www.sqlite.org/index.html )
 
 
 ## Installation:
@@ -50,7 +52,9 @@ and filled with comments.
 
 * GNU Guile - https://www.gnu.org/software/guile/
 
-* guile-dbi - 
+* guile-dbi - https://github.com/eestrada/guile-dbi
+
+* Sqlite.org - https://www.sqlite.org/index.html
 
 * URL of this project - https://github.com/PESchoenberg/gexsys
 
