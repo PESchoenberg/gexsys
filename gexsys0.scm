@@ -2,7 +2,8 @@
 ;
 ; gexsys0.scm
 ;
-; A simple expert system based on GNU Guile and relational databases.
+; Gexsys is a simple expert system framework based on GNU Guile and relational 
+; databases.
 ;
 ; Sources: 
 ;

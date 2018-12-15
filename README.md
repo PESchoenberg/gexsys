@@ -3,7 +3,7 @@
 
 ## Overview:
 
-A relational knowledge base framework for GNU Guile usings simple tools for
+A relational knowledge base framework for GNU Guile using simple tools for
 constructing rule based systems using relational databases.
 
 
@@ -56,7 +56,7 @@ and filled with comments.
 
 * Sqlite.org - https://www.sqlite.org/index.html
 
-* URL of this project - https://github.com/PESchoenberg/gexsys
+* URL of this project - https://github.com/PESchoenberg/gexsys.git
 
 
 ## License:
