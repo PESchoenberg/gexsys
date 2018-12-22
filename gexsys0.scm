@@ -43,10 +43,8 @@
 	    kb-read-mod
 	    kb-think
 	    kb-write-act
-	    kb-cycle-lim
-	    kb-reas-iter
 	    kb-setup-session-wr
-	    kb-comp-iter p_dbms))
+	    kb-get-value-from-item))
 
 
 ; kb-create  - creates knowledge base.
@@ -72,17 +70,54 @@
 ; you intend to use the function again. If you intend to use kb-create on an
 ; existing knowledge base, back it up first.
 ;
+; Some default records for sde_facts, sde_mem_facts and sde_rules will be 
+; added. In principle, the facts, values and rules created by this function 
+; should not be altered by the user.
+;
 ; Arguments:
 ; - p_dbms: database management system to be used.
 ; - p_kb1: knowledge base name.
 ;
 (define (kb-create p_dbms p_kb1)
-  (kb-create-sde-edges p_dbms p_kb1)
-  (kb-create-sde-facts p_dbms p_kb1)
-  (kb-create-sde-mem-facts p_dbms p_kb1)
-  (kb-create-sde-prg-rules p_dbms p_kb1)
-  (kb-create-sde-rules p_dbms p_kb1)
+  (let ((co "prg0_0"))
+    (let ((st "enabled"))
+      (let ((tb1 "sde_facts"))      
+	(let ((tb2 "sde_mem_facts"))
+	  (let ((tb3 "sde_rules"))
+	    (let ((a " "))
+	      (let ((c " "))
+		(let ((d " "))
+
+		  ; Create tables.
+		  (kb-create-sde-edges p_dbms p_kb1)
+		  (kb-create-sde-facts p_dbms p_kb1)
+		  (kb-create-sde-mem-facts p_dbms p_kb1)
+		  (kb-create-sde-prg-rules p_dbms p_kb1)
+		  (kb-create-sde-rules p_dbms p_kb1)
+
+		  ; Default records for sde-facts and sde_mem_facts.
+		  (kb-insert-facts p_dbms p_kb1 tb1 co st "counter1" 0.0 1.0)
+		  (kb-insert-facts p_dbms p_kb1 tb2 co st "counter1" 0.0 1.0)
+		  (kb-insert-facts p_dbms p_kb1 tb1 co st "mode-run" 0.0 1.0)
+		  (kb-insert-facts p_dbms p_kb1 tb2 co st "mode-run" 1.0 1.0)  
+		  (kb-insert-facts p_dbms p_kb1 tb1 co st "max-iter" 0.0 1.0)
+		  (kb-insert-facts p_dbms p_kb1 tb2 co st "max-iter" 1.0 1.0) 
+
+                  ; Default records for sde_rules.
+		  (set! c "SELECT Value FROM sde_facts WHERE Item = `counter1`")
+		  (set! a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `counter1` ) + 1 ) WHERE Status = `applykbrules` AND Item = `counter1`")
+		  (set! d "Increase counter in one unit on each iteration.")
+		  (kb-insert-rules p_dbms p_kb1 tb3 co st c a d 1.0)
+		)
+	      )
+	    )
+	  )
+	)
+      )	    
+    )
+  )
 )
+
 
 
 ; kb-create-sde-edges - creates table sde_edges.
@@ -305,8 +340,6 @@
 			    (let ((b11 (string-append a2 b10)))
 			      (let ((b12 (string-append p_tb1 b11)))
 				(let ((sql (string-append a1 b12)))
-				  (newline)
-				  (display sql)
 				  (kb-query p_dbms p_kb1 sql)
 				)
 			      )
@@ -359,8 +392,6 @@
 				(let ((b12 (string-append a2 b11)))
 				  (let ((b13 (string-append p_tb1 b12)))
 				    (let ((sql (string-append a1 b13)))
-				      (newline)
-				      (display sql)
 				      (kb-query p_dbms p_kb1 sql)
 				    )
 				  )
@@ -415,44 +446,40 @@
 ; Arguments:
 ; - p_dbms: database management system to be used.
 ; - p_kb1: knowledge base name.
+; - p_f1: control value for sensor data function.
 ;
-(define (kb-read-sen p_dbms p_kb1)
-
-  ; Update status.
-  (kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'getfromnetwork' WHERE Status = 'sentodb' OR Status = 'enabled';")  
-  (newline)
+(define (kb-read-sen p_dbms p_kb1 p_f1)
+  (if (= p_f1 1)(kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'getfromnetwork' WHERE Status = 'sentodb' OR Status = 'enabled';"))
 )
 
   
 ; kb-read-mod - read information from external modules. If you want to have user 
 ; interaction with the system, you should do it within the context of this
-; function.
+; function, and modules should exchange data with the kb using status
+; 'getfromnetwork'. Interaction with the database should be direct from the 
+; external module to the kb setting status to 'getfromnetwork'. On each 
+; iteration, data passed to the kb using this status will be 'aligned' with the 
+; rest of the data by applying stauts 'applykbrules' to it.
 ;
 ; Arguments:
 ; - p_dbms: database management system to be used.
 ; - p_kb1: knowledge base name.
+; - p_f2: control value for module data function.
 ;
-(define (kb-read-mod p_dbms p_kb1)
-
-  ; Your code here... (TODO this requires a first order function call)
-  
-  ; Update status.
-  (kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'applykbrules' WHERE Status = 'getfromnetwork';")  
-  (newline)
+(define (kb-read-mod p_dbms p_kb1 p_f2)
+  (if (= p_f2 1)(kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'applykbrules' WHERE Status = 'getfromnetwork';"))
 )
 
   
-; kb-think - apply rules from sde_rules
+; kb-think - apply rules from sde_rules to all items sporting status 'applykbrules'.
 ;
 ; Arguments:
 ; - p_dbms: database management system to be used.
 ; - p_kb1: knowledge base name.
+; - p_f3: control value for reasoning data function.
 ;
-(define (kb-think p_dbms p_kb1)
-
-  ; Update status.
-  (kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'sentodb' WHERE Status = 'applykbrules';")  
-  (newline)
+(define (kb-think p_dbms p_kb1 p_f3)
+  (if (= p_f3 1)(kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'sentodb' WHERE Status = 'applykbrules';"))
 )
 
   
@@ -461,44 +488,11 @@
 ; Arguments:
 ; - p_dbms: database management system to be used.
 ; - p_kb1: knowledge base name.
+; - p_f4: control value for actuator data function.
 ;
-(define (kb-write-act p_dbms p_kb1)
-
-  ; Update status.
-  (kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'sentodb' WHERE Status = 'applykbrules';")  
-  (newline)
+(define (kb-write-act p_dbms p_kb1 p_f4)
+  (if (= p_f4 1)(kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'sentodb' WHERE Status = 'applykbrules';"))
 )
-
-
-; kb-cycle-lim - perform a limited number of reasoning cycles.
-;
-; Arguments:
-; - p_dbms: database management system to be used.
-; - p_kb1: knowledge base name.
-; - p_n1: number of iterations to run.
-;
-(define (kb-cycle-lim p_dbms p_kb1 p_n1)
-  (let loop ((i p_n1))
-    (if (= i 0)
-	(display "End of cycle...")
-	(begin (kb-comp-iter p_dbms p_kb1 i p_n1)
-                (loop (- i 1))))))
-
-
-; kb-reas-iter - perform one reasoning iteration.
-;
-; Arguments:
-; - p_dbms: database management system to be used.
-; - p_kb1: knowledge base name.
-;
-(define (kb-reas-iter p_dbms p_kb1)
-  ; Call these functions on every iteration of the cycle.    
-  (begin (display "p1 -------------------------------")(newline))
-  (newline)
-  (kb-read-sen p_dbms p_kb1)
-  (kb-read-mod p_dbms p_kb1)
-  (kb-think p_dbms p_kb1)
-  (kb-write-act p_dbms p_kb1))
 
 
 ; kb-setup-session-wr - setup session wrapper. call kb_setup_session 
@@ -508,26 +502,49 @@
 ; Arguments:
 ; - p_dbms: database management system to be used.
 ; - p_kb1: knowledge base name.
-; - p_i1: i value.
-; - p_n1: n value.
+; - p_i1: i value (see kb-cycle-lim).
+; - p_n1: n value (see kb-cycle-lim).
 ;
 (define (kb-setup-session-wr p_dbms p_kb1 p_i1 p_n1)
-  (if (equal? p_i1 p_n1)(kb-setup-session p_dbms p_kb1)))
+  (if (equal? p_i1 p_n1)(kb-setup-session p_dbms p_kb1))
+)
 
 
-; Complete iteration module.
+; kb-get-value-from-item - returns the value of an item as a numeric variable.
 ;
 ; Arguments:
 ; - p_dbms: database management system to be used.
 ; - p_kb1: knowledge base name.
-; - p_i1: i value.
-; - p_n1: n value.
+; - p_tb1: sde*facts table.
+; - p_it1: item.
 ;
-(define (kb-comp-iter p_dbms p_kb1 p_i1 p_n1)
-  (kb-setup-session-wr p_dbms p_kb1 p_i1 p_n1)
-  (kb-reas-iter p_dbms p_kb1))
-
-
+(define (kb-get-value-from-item p_dbms p_kb1 p_tb1 p_it1)
+  (let ((ret 0))
+    (let ((sql-res #f))
+      (let ((db-obj (dbi-open "sqlite3" p_kb1)))  
+        (let ((a "';"))
+  	  (let ((b "SELECT Value FROM "))
+	    (let ((c " WHERE Item = '"))
+	      (let ((sql-sen (string-append b (string-append p_tb1 (string-append c (string-append p_it1 a))))))
+	        (dbi-query db-obj sql-sen)
+	        (set! sql-res (dbi-get_row db-obj))
+		(newline)
+	      )
+	    )
+	  )
+        )
+        (dbi-close db-obj)    
+      )   
+      ; If sql-res false (no record found) set ret to zero. Otherwise, set it
+      ; to to adequate value obtained by cdr.
+      (if (equal? sql-res #f)
+	  (set! ret 0)
+	  (begin (set! ret (cdr (list-ref sql-res 0))))
+      )
+    )
+    (* ret 1)
+  )
+)
 
 
 

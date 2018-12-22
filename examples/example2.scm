@@ -4,10 +4,9 @@
 
 ; ==============================================================================
 ;
-; example1.scm
+; example2.scm
 ;
-; This program does nothing particular except showing different functions of
-; gexsys.
+; This program shows the use of a continuous-loop expert system.
 ;
 ; Compilation:
 ;
@@ -15,7 +14,7 @@
 ;
 ; - At the terminal, enter the following:
 ;
-;   guile example1.scm 
+;   guile example2.scm 
 ;
 ; ==============================================================================
 ;
@@ -43,7 +42,7 @@
 
 ; Vars and initial stuff.
 (define dbms "sqlite3")
-(define kb1 "example1.db")
+(define kb1 "example2.db")
 (define co "prg0_0")
 (define st "enabled")
 (define v 0.0)
@@ -95,89 +94,64 @@
 (define co "prg0_0") ; Standard context value to indicate that a rule always resides on sde_rules and not sde_meme_rules.
 
 
-; Insert rule #2.
+; Insert rule.
+(define c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value = 0")
+(define a "UPDATE sde_facts SET Value = 2 WHERE Status = `applykbrules` AND Item = `max-iter`")
+(define d "On initial iteration, set max-iter to a specified value.")
+(kb-insert-rules dbms kb1 tb1 co st c a d p)
+
+
+; Insert rule.
 (define c "SELECT Value FROM sde_facts WHERE Item = `item-a` AND Value = 0")
 (define a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `counter2` ) + 1 ) WHERE Status = `applykbrules` AND Item = `counter2`")
 (define d "If item-a = zero, then increment counter2.")
 (kb-insert-rules dbms kb1 tb1 co st c a d p)
 
 
-; Insert rule #3.
+; Insert rule.
 (define c "SELECT Value FROM sde_facts WHERE Item = `item-a` AND Value = 0")
 (define a "UPDATE sde_facts SET Value = 1 WHERE Item = `item-a` AND Status = `applykbrules`")
 (define d "If item-a = zero, then set its value to 1.")
 (kb-insert-rules dbms kb1 tb1 co st c a d p)
 
 
-; Insert rule #4.
+; Insert rule.
 (define c "SELECT Value FROM sde_facts WHERE Item = `item-a` AND Value = 1")
 (define a "UPDATE sde_facts SET Value = 1 WHERE Item = `item-b` AND Status = `applykbrules`")
 (define d "If item-a = 1, then set item-b value to 1.")
 (kb-insert-rules dbms kb1 tb1 co st c a d p)
 
 
-; Insert rule #5.
+; Insert rule.
 (define c "SELECT Value FROM sde_facts WHERE Item = `item-a` AND Value >= 1")
 (define a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `item-c` ) * (-2) ) WHERE Item = `item-c` AND Status = `applykbrules`")
 (define d "If item-a >= 1, then set item-c value to item-c * (-2).")
 (kb-insert-rules dbms kb1 tb1 co st c a d p)
 
 
-; Insert rule #6.
+; Insert rule.
 (define c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value >= ( SELECT Value FROM sde_facts WHERE Item = `max-iter` )")
 (define a "UPDATE sde_facts SET Value = 0 WHERE Item = `mode-run` AND Status = `applykbrules`")
 (define d "If count1 reached the values specified for max-iter, then mode-run is set to zero in order to stop the cycle.")
 (kb-insert-rules dbms kb1 tb1 co st c a d p)
 
 
-; This function will increase by ten the values of item-* items. Its goal is to 
-; show how you can provide a helper function to update table sde_facts with 
-; sensorial data. Of course, real functions might be far more complex than this one.
-; For each step of the full reasining cycle you can create one such function to 
-; deal with specific issues related to the step in question. The only condition is 
-; that each such function must return the value one.
-;
-; Arguments:
-; - p_dbms: database management system to be used.
-; - p_kb1: knowledge base name.
-;
-(define (item10 p_dbms p_kb1)
-  (let ((ret 1))
-    (let ((sql-sen "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts  WHERE Item LIKE 'item-%' ) + 10 ) WHERE Item LIKE 'item-%'"))
-      (newline)
-      (let ((db-obj (dbi-open "sqlite3" p_kb1)))
-	(display sql-sen)
-	(newline)
-	(kb-query p_dbms p_kb1 sql-sen)
-        (dbi-close db-obj)
-      )
-    )
-    ; Return the value one.
-    (* ret 1)  
-  )
-)    
+; Run a full cycle as king as mode-run equals 1. A change of the value of this
+; variable depends entirely on the rules contained in the kb.
+(define mode-run 1)
+(kb-setup-session dbms kb1)   
+(while (= mode-run 1)
+       (display "Working...")
+       (newline)
+       (kb-read-sen dbms kb1 1)
+       (kb-read-mod dbms kb1 1)
+       (kb-think dbms kb1 1)
+       (kb-write-act dbms kb1 1)
+       (set! mode-run (kb-get-value-from-item dbms kb1 "sde_facts" "mode-run"))
+)
 
 
-; MAIN PROGRAM ----------------------------------------------------------------
-
-
-; Start with a heading.
-(newline)
-(display "------------------------------------------------------------")
-(newline)
-(display "Example of a full reasoning iteration.")
-(newline)
-
-
-; These steps constitute a full reasoning iteration. If you loop them, you
-; can obtain several different variants of reasoning processes. 
-(kb-read-sen dbms kb1 (item10 dbms kb1))
-(kb-read-mod dbms kb1 1)
-(kb-think dbms kb1 1)
-(kb-write-act dbms kb1 1)
-
-
-; And then finish with a message.
+; Fihish the program with a message.
 (newline)
 (display "Okay then...")
 (newline)
