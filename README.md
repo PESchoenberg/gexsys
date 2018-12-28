@@ -17,6 +17,8 @@ constructing rule based systems using relational databases.
 
 * Sqlite3 - ( https://www.sqlite.org/index.html )
 
+* grsp - https://github.com/PESchoenberg/grsp.git
+
 
 ## Installation:
 

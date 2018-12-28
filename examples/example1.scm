@@ -38,6 +38,7 @@
 
 
 (use-modules (dbi dbi))
+(use-modules (grsp grsp0))
 (use-modules (gexsys gexsys0))
 
 
@@ -161,27 +162,66 @@
 ; MAIN PROGRAM ----------------------------------------------------------------
 
 
-; Start with a heading.
-(newline)
-(display "------------------------------------------------------------")
-(newline)
-(display "Example of a full reasoning iteration.")
-(newline)
-
-
 ; These steps constitute a full reasoning iteration. If you loop them, you
-; can obtain several different variants of reasoning processes. 
+; can obtain several different variants of reasoning processes. You may need
+; to create functions to replace the last parameter p_f1 by function calls
+; like in the case of kb-read-sen in order to get meaningful results on
+; each step.
+;
+; Gexsys is essentially the Scheme version of an expert system designed for  
+; a semi - autonomous spacecraft. That system - called exsys - runs on an 
+; unique thread, separated from other processes In this thread, exsys works 
+; on a continupus loop in which several things take place:
+;
+; 1 - Data is gathered from the onboard sensors and stored into sde_facts; this  
+; is what function kb-read-sen does. i.e. current speed, current altitude 					;
+; as measured from a reference celestial body.
+
+; 2 - Then, data coming from modules related to the user interface - human or 
+; machine are gathered and stored in sde_facts, on specific fact records, such as 
+; target or desired speed, target altitude, etc. with respect to a reference 
+; body that is usually the same as in paraghraph 1. This is achieved via 
+; external modules and then, kb-read-mode finishes the process by changing the
+; Status flag on the recently-added item values.
+;
+; 3 - Then, rules are checked and executed if applicable. for example, once the 
+; kb has received a different value for target speed with respect to the current 
+; speed, rules concerning reference celestial bodies and thrust maneuvering 
+; might come into action in order to achieve the desired goals. This is the job 
+; of function kb-think, which reads the Condition field of each rule, sees if 
+; its conditions are applicable, and if so, then reads the Action field and 
+; executes it. This meas that values of items that correspond to actuators 
+; will be updated so that in the next step, data will be send to them and
+; processes such as maneuvers will be performed. kb-think does not actually 
+; actuate the decisions taken, it just passes the relevant parameters to the 
+; data items that will be passed to the actuators.
+
+; 4 - Finally. kb-write-act passes the data to the actuators. In the case of
+; Gexsys, little is done at this stage, but nevertheless, the function updates				      
+; the status of the kb.
+;
+; You may not need to perform all those steps, depending on the architecture of
+; your particular system, or you may have to add additional ones, but now you
+; know where does this particular architecture comes from.
+;
+; Also, notice that Gexsys uses SQL statement both as data stored in the kb and
+; as program instructions. That is, data and and program statements are 
+; essentially the same thing, and as data can be modified on the fly, this 
+; means that you can add, delete or even modify the rules of your system while 
+; it is running, or the system can modify them by itself.
+;
+(ptit "=" 60 2 "Example1 - One single iteration of a full reasoning process.")
 (kb-read-sen dbms kb1 (item10 dbms kb1))
 (kb-read-mod dbms kb1 1)
 (kb-think dbms kb1 1)
 (kb-write-act dbms kb1 1)
 
 
-; And then finish with a message.
-(newline)
-(display "Okay then...")
-(newline)
+; And then show all the columns or fields of sde_facts.
+(kb-display-table dbms kb1 "SELECT * FROM sde_facts" "q")
 
 
+; Or we can see only some selected data.
+(kb-display-table dbms kb1 "SELECT Item, Value FROM sde_facts" "q")
 
 

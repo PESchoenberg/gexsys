@@ -29,6 +29,7 @@
 
 (define-module (gexsys gexsys0)
   #:use-module (dbi dbi)
+  #:use-module (grsp grsp0)
   #:export (kb-create
 	    kb-create-sde-edges
 	    kb-create-sde-facts
@@ -44,7 +45,8 @@
 	    kb-think
 	    kb-write-act
 	    kb-setup-session-wr
-	    kb-get-value-from-item))
+	    kb-get-value-from-item
+	    kb-display-table))
 
 
 ; kb-create  - creates knowledge base.
@@ -479,6 +481,44 @@
 ; - p_f3: control value for reasoning data function.
 ;
 (define (kb-think p_dbms p_kb1 p_f3)
+  (let (( db-obj1 (dbi-open "sqlite3" "DGIIIAI.db")))
+    (let ((sql-res1 #t))
+      (let ((sql-res2 #f))
+	(let ((condition " "))
+	  (let ((action " "))
+	    (let ((con " "))
+	      (let ((act " "))
+                (dbi-query db-obj1 "SELECT Condition, Action from sde_rules WHERE Status = 'enabled'")
+		(set! sql-res1 (dbi-get_row db-obj1))
+                (while (not (equal? sql-res1 #f))
+      	               (set! sql-res1 (dbi-get_row db-obj1))
+		       
+                       ; Get Condition and action into different string variables.
+		       (set! con (list-ref sql-res1 0))
+		       (set! act (list-ref sql-res1 1))
+		       (set! condition (cdr (con)))
+		       (set! action (cdr (act)))
+
+		       ; Test if condition applies. If it does, apply action.
+		       (let ((db-obj2 (dbi-open "sqlite3" "DGIIIAI.db")))
+		         (dbi-query db-obj2 condition)
+		         (set! sql-res2 (dbi-get_row db-obj2))
+		         (if (not (equal? sql-res2 #f))
+			     (dbi-query db-obj2 action)
+		         )
+		         (dbi-close db-obj2)
+		   )
+		   (set! sql-res2 #f)
+		 )
+	       )  
+	    )
+ 	  )		   
+        )
+      )
+    )
+  )	
+
+  ; Once all rules in sde_rules have been reviewed, change status.
   (if (= p_f3 1)(kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'sentodb' WHERE Status = 'applykbrules';"))
 )
 
@@ -545,6 +585,45 @@
     (* ret 1)
   )
 )
+
+
+; kb-display-table - Displays the content of a table as defined by p_sql.
+;
+; Arguments:
+; - p_dbms: database management system to be used.
+; - p_kb1: knowledge base name.
+; - p_sql: SQL query.
+; - p_tit: title or header for listing.
+;   - "q": to use p_sql as value for p_tit.
+;
+(define (kb-display-table p_dbms p_kb1 p_sql p_tit)
+  (let ((sql-res #f))
+    (if (equal? p_tit "q")(set! p_tit p_sql))
+    (pline "-" 60)
+    (display p_tit)
+    (newline)
+    (newline)
+    (let ((db-obj (dbi-open "sqlite3" p_kb1)))   
+      (dbi-query db-obj p_sql)
+      (display db-obj)
+      (newline)
+      (write (dbi-get_row db-obj))
+      (newline)
+      (set! sql-res (dbi-get_row db-obj))
+      (while (not (equal? sql-res #f))
+	     (display sql-res)(newline)
+	     (set! sql-res (dbi-get_row db-obj))
+      )
+      (display sql-res)
+      (newline)
+      (dbi-close db-obj)
+      (write (dbi-get_row db-obj))
+      (newline)
+    )
+  )
+)
+      
+
 
 
 
