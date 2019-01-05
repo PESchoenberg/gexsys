@@ -46,7 +46,9 @@
 	    kb-write-act
 	    kb-setup-session-wr
 	    kb-get-value-from-item
-	    kb-display-table))
+	    kb-display-table
+	    ;kb-setup-session
+	    ))
 
 
 ; kb-create  - creates knowledge base.
@@ -106,8 +108,8 @@
 		  (kb-insert-facts p_dbms p_kb1 tb2 co st "max-iter" 1.0 1.0) 
 
                   ; Default records for sde_rules.
-		  (set! c "SELECT Value FROM sde_facts WHERE Item = `counter1`")
-		  (set! a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `counter1` ) + 1 ) WHERE Status = `applykbrules` AND Item = `counter1`")
+		  (set! c "SELECT Value FROM sde_facts WHERE Item = `counter1`;")
+		  (set! a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `counter1` ) + 1 ) WHERE Status = `applykbrules` AND Item = `counter1`;")
 		  (set! d "Increase counter in one unit on each iteration.")
 		  (kb-insert-rules p_dbms p_kb1 tb3 co st c a d 1.0)
 		)
@@ -431,11 +433,25 @@
   ; Delete left-overs from past sessions i.e. rules loaded from sde_prg_rules.
   (kb-query p_dbms p_kb1 "DELETE FROM sde_rules WHERE Context NOT LIKE 'prg0_0';")
 
+  ; These two updates are requred to replace some characters that are used
+  ; to input SQL as data itself into an SQLite table, since both Scheme and 
+  ; SQLIte do a bit of a mess with special characters such as " ' and `. Thus 
+  ; after geetting SQL queries as data into the database using ` in some cases 
+  ; because " and ' cause conflicts, those ` characters must be replaced by
+  ; ' characters, and that is what this section achieves. Remember that data
+  ; introduced in fields Condition and Action in sde*rules tables using SQL 
+  ; statements are SQL statements themselves.
+  ;
+  (kb-query p_dbms p_kb1 "UPDATE sde_rules SET Condition = REPLACE ( Condition, \"`\", \"'\");")
+  (kb-query p_dbms p_kb1 "UPDATE sde_rules SET Action = REPLACE ( Action, \"`\", \"'\");")
+  (kb-query p_dbms p_kb1 "UPDATE sde_prg_rules SET Condition = REPLACE ( Condition, \"`\", \"'\");")
+  (kb-query p_dbms p_kb1 "UPDATE sde_prg_rules SET Action = REPLACE ( Action, \"`\", \"'\");")
+  
   ; Set the Value field of sde_facts to the default values contained in sde_mem_facts.
-  (kb-query p_dbms p_kb1"UPDATE sde_facts SET Value = COALESCE( ( SELECT sde_mem_facts.Value FROM sde_mem_facts WHERE ( sde_facts.Item = sde_mem_facts.Item AND sde_mem_facts.Status = 'enabled' AND sde_mem_facts.Context = 'prg0_0' ) ), 0);")
+  (kb-query p_dbms p_kb1 "UPDATE sde_facts SET Value = COALESCE( ( SELECT sde_mem_facts.Value FROM sde_mem_facts WHERE ( sde_facts.Item = sde_mem_facts.Item AND sde_mem_facts.Status = 'enabled' AND sde_mem_facts.Context = 'prg0_0' ) ), 0);")
 
   ; Set the Prob field of sde_facts to the default values contained in sde_mem_facts.
-  (kb-query p_dbms p_kb1"UPDATE sde_facts SET Prob = COALESCE( ( SELECT sde_mem_facts.Prob FROM sde_mem_facts WHERE ( sde_facts.Item = sde_mem_facts.Item AND sde_mem_facts.Status = 'enabled' AND sde_mem_facts.Context = 'prg0_0' ) ), 0);")
+  (kb-query p_dbms p_kb1 "UPDATE sde_facts SET Prob = COALESCE( ( SELECT sde_mem_facts.Prob FROM sde_mem_facts WHERE ( sde_facts.Item = sde_mem_facts.Item AND sde_mem_facts.Status = 'enabled' AND sde_mem_facts.Context = 'prg0_0' ) ), 0);")
 
   ; Initialize status for first cycle.
   (kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'sentodb' WHERE Status != 'disabled';")
@@ -481,43 +497,70 @@
 ; - p_f3: control value for reasoning data function.
 ;
 (define (kb-think p_dbms p_kb1 p_f3)
-  (let (( db-obj1 (dbi-open "sqlite3" "DGIIIAI.db")))
+  (let (( db-obj (dbi-open "sqlite3" p_kb1)))
     (let ((sql-res1 #t))
       (let ((sql-res2 #f))
-	(let ((condition " "))
-	  (let ((action " "))
-	    (let ((con " "))
-	      (let ((act " "))
-                (dbi-query db-obj1 "SELECT Condition, Action from sde_rules WHERE Status = 'enabled'")
-		(set! sql-res1 (dbi-get_row db-obj1))
-                (while (not (equal? sql-res1 #f))
-      	               (set! sql-res1 (dbi-get_row db-obj1))
+	(let ((condition "c"))
+	  (let ((action "a"))
+	    (let ((con "c"))
+	      (let ((act "a"))
+		(let ((i 0))
+                  (dbi-query db-obj "SELECT Condition, Action from sde_rules WHERE Status = 'enabled'")
+		  (set! sql-res1 (dbi-get_row db-obj))
+                  (while (not (equal? sql-res1 #f))
+                         ; Get Condition and action into different string variables.
+		         (set! con (list-ref sql-res1 0))
+		         (set! act (list-ref sql-res1 1))		       
+		         (set! condition (cdr con))
+		         (set! action (cdr act))
+		         (set! i (+ i 1))
 		       
-                       ; Get Condition and action into different string variables.
-		       (set! con (list-ref sql-res1 0))
-		       (set! act (list-ref sql-res1 1))
-		       (set! condition (cdr (con)))
-		       (set! action (cdr (act)))
+		         ; Test if condition applies. If it does, apply action.
+		         (newline)
+		         (display "Step 1.4......................")
+		         (newline)
+		         (dbi-query db-obj condition)
+		         (set! sql-res2 (dbi-get_row db-obj))
 
-		       ; Test if condition applies. If it does, apply action.
-		       (let ((db-obj2 (dbi-open "sqlite3" "DGIIIAI.db")))
-		         (dbi-query db-obj2 condition)
-		         (set! sql-res2 (dbi-get_row db-obj2))
-		         (if (not (equal? sql-res2 #f))
-			     (dbi-query db-obj2 action)
+		         ; Equiv to if.
+		         (while (not (equal? sql-res2 #f))
+			        (display "Step 1.4.1....................")
+			        (newline)
+			        (display condition)
+			        (newline)
+			        (write sql-res2)
+			        (newline)
+			        (display action)
+			        (dbi-query db-obj action)
+			        (newline)
+			        (set! sql-res2 #f)
 		         )
-		         (dbi-close db-obj2)
-		   )
-		   (set! sql-res2 #f)
-		 )
-	       )  
+		         (newline)
+		         (display "Step 1.5......................")
+		         (set! sql-res2 #f)
+		         (dbi-query db-obj "SELECT Condition, Action from sde_rules WHERE Status = 'enabled'")
+		         (let ((j 0))
+			   (while (not (equal? i j))
+				        (set! sql-res1 (dbi-get_row db-obj))
+				        (set! j (+ j 1))
+			   )	
+		         )
+		         (newlines 3)
+		  )
+		)
+	      )  
 	    )
  	  )		   
         )
       )
     )
+    (dbi-close db-obj)
   )	
 
+  ;
+  (display "Step 2.......................")
+  (newline)
+  
   ; Once all rules in sde_rules have been reviewed, change status.
   (if (= p_f3 1)(kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'sentodb' WHERE Status = 'applykbrules';"))
 )
@@ -623,7 +666,6 @@
   )
 )
       
-
 
 
 

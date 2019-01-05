@@ -97,37 +97,37 @@
 
 
 ; Insert rule #2.
-(define c "SELECT Value FROM sde_facts WHERE Item = `item-a` AND Value = 0")
-(define a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `counter2` ) + 1 ) WHERE Status = `applykbrules` AND Item = `counter2`")
-(define d "If item-a = zero, then increment counter2.")
+(define c "SELECT Value FROM sde_facts WHERE Item = `item-a` AND Value = 0;")
+(define a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `counter2` ) + 1 ) WHERE Status = `applykbrules` AND Item = `counter2`;")
+(define d "2- If item-a = zero, then increment counter2.")
 (kb-insert-rules dbms kb1 tb1 co st c a d p)
 
 
 ; Insert rule #3.
-(define c "SELECT Value FROM sde_facts WHERE Item = `item-a` AND Value = 0")
-(define a "UPDATE sde_facts SET Value = 1 WHERE Item = `item-a` AND Status = `applykbrules`")
-(define d "If item-a = zero, then set its value to 1.")
+(define c "SELECT Value FROM sde_facts WHERE Item = `item-a` AND Value = 0;")
+(define a "UPDATE sde_facts SET Value = 1 WHERE Item = `item-a` AND Status = `applykbrules`;")
+(define d "3- If item-a = zero, then set its value to 1.")
 (kb-insert-rules dbms kb1 tb1 co st c a d p)
 
 
 ; Insert rule #4.
-(define c "SELECT Value FROM sde_facts WHERE Item = `item-a` AND Value = 1")
-(define a "UPDATE sde_facts SET Value = 1 WHERE Item = `item-b` AND Status = `applykbrules`")
-(define d "If item-a = 1, then set item-b value to 1.")
+(define c "SELECT Value FROM sde_facts WHERE Item = `item-a` AND Value = 1;")
+(define a "UPDATE sde_facts SET Value = 1 WHERE Item = `item-b` AND Status = `applykbrules`;")
+(define d "4- If item-a = 1, then set item-b value to 1.")
 (kb-insert-rules dbms kb1 tb1 co st c a d p)
 
 
 ; Insert rule #5.
-(define c "SELECT Value FROM sde_facts WHERE Item = `item-a` AND Value >= 1")
-(define a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `item-c` ) * (-2) ) WHERE Item = `item-c` AND Status = `applykbrules`")
-(define d "If item-a >= 1, then set item-c value to item-c * (-2).")
+(define c "SELECT Value FROM sde_facts WHERE Item = `item-a` AND Value >= 1;")
+(define a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `item-c` ) * (-2) ) WHERE Item = `item-c` AND Status = `applykbrules`;")
+(define d "5- If item-a >= 1, then set item-c value to item-c * (-2).")
 (kb-insert-rules dbms kb1 tb1 co st c a d p)
 
 
 ; Insert rule #6.
-(define c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value >= ( SELECT Value FROM sde_facts WHERE Item = `max-iter` )")
-(define a "UPDATE sde_facts SET Value = 0 WHERE Item = `mode-run` AND Status = `applykbrules`")
-(define d "If count1 reached the values specified for max-iter, then mode-run is set to zero in order to stop the cycle.")
+(define c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value >= ( SELECT Value FROM sde_facts WHERE Item = `max-iter` );")
+(define a "UPDATE sde_facts SET Value = 0 WHERE Item = `mode-run` AND Status = `applykbrules`;")
+(define d "6- If count1 reached the values specified for max-iter, then mode-run is set to zero in order to stop the cycle.")
 (kb-insert-rules dbms kb1 tb1 co st c a d p)
 
 
@@ -144,7 +144,7 @@
 ;
 (define (item10 p_dbms p_kb1)
   (let ((ret 1))
-    (let ((sql-sen "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts  WHERE Item LIKE 'item-%' ) + 10 ) WHERE Item LIKE 'item-%'"))
+    (let ((sql-sen "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts  WHERE Item LIKE 'item-%' ) + 10 ) WHERE Item LIKE 'item-%';"))
       (newline)
       (let ((db-obj (dbi-open "sqlite3" p_kb1)))
 	(display sql-sen)
@@ -211,6 +211,7 @@
 ; it is running, or the system can modify them by itself.
 ;
 (ptit "=" 60 2 "Example1 - One single iteration of a full reasoning process.")
+(kb-setup-session dbms kb1)
 (kb-read-sen dbms kb1 (item10 dbms kb1))
 (kb-read-mod dbms kb1 1)
 (kb-think dbms kb1 1)
