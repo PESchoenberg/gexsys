@@ -93,7 +93,6 @@
 ; Insertion of rules.
 (define tb1 "sde_rules")
 ; (define tb2 "sde_mem_rules") ; We would need this only if rules are stored as programs.
-(define co "prg0_0") ; Standard context value to indicate that a rule always resides on sde_rules and not sde_meme_rules.
 
 
 ; Insert rule #2.
@@ -127,7 +126,14 @@
 ; Insert rule #6.
 (define c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value >= ( SELECT Value FROM sde_facts WHERE Item = `max-iter` );")
 (define a "UPDATE sde_facts SET Value = 0 WHERE Item = `mode-run` AND Status = `applykbrules`;")
-(define d "6- If count1 reached the values specified for max-iter, then mode-run is set to zero in order to stop the cycle.")
+(define d "6- If counter1 reached the values specified for max-iter, then mode-run is set to zero in order to stop the cycle.")
+(kb-insert-rules dbms kb1 tb1 co st c a d p)
+
+
+; Insert rule #4.
+(define c "SELECT Value FROM sde_facts WHERE Item = `item-a` AND Value >= 10;")
+(define a "UPDATE sde_facts SET Value = 2 WHERE Item = `max-iter` AND Status = `applykbrules`;")
+(define d "4- This rule controls dynamically the number of iterations.")
 (kb-insert-rules dbms kb1 tb1 co st c a d p)
 
 
@@ -209,6 +215,11 @@
 ; essentially the same thing, and as data can be modified on the fly, this 
 ; means that you can add, delete or even modify the rules of your system while 
 ; it is running, or the system can modify them by itself.
+;
+; In this case, the number of times that kb-think will repeat the application of 
+; its rules may be modified by altering the value of fact max-iter using a 
+; a specific rule. However, notice that this does not imply that the whole 
+; reasoning cycle implying data gathering, thinking and actuating is repeated.
 ;
 (ptit "=" 60 2 "Example1 - One single iteration of a full reasoning process.")
 (kb-setup-session dbms kb1)

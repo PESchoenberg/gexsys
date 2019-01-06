@@ -97,43 +97,43 @@
 
 ; Insert rule.
 (define c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value = 0")
-(define a "UPDATE sde_facts SET Value = 3 WHERE Status = `applykbrules` AND Item = `max-iter`")
-(define d "1 On initial iteration, set max-iter to a specified value.")
+(define a "UPDATE sde_facts SET Value = 1 WHERE Status = `applykbrules` AND Item = `max-iter`")
+(define d "1- On a certain value for counter1, set max-iter to a specified value.")
 (kb-insert-rules dbms kb1 tb3 co st c a d p)
 
 
 ; Insert rule.
 (define c "SELECT Value FROM sde_facts WHERE Item = `item-a` AND Value = 0")
 (define a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `counter2` ) + 1 ) WHERE Status = `applykbrules` AND Item = `counter2`")
-(define d "2 If item-a = zero, then increment counter2.")
-(kb-insert-rules dbms kb1 tb3 co st c a d p)
-
-
-; Insert rule.
-(define c "SELECT Value FROM sde_facts WHERE Item = `item-a` AND Value = 0")
-(define a "UPDATE sde_facts SET Value = 1 WHERE Item = `item-a` AND Status = `applykbrules`")
-(define d "3 If item-a = zero, then set its value to 1.")
+(define d "2- If item-a = zero, then increment counter2.")
 (kb-insert-rules dbms kb1 tb3 co st c a d p)
 
 
 ; Insert rule.
 (define c "SELECT Value FROM sde_facts WHERE Item = `item-a` AND Value = 1")
 (define a "UPDATE sde_facts SET Value = 1 WHERE Item = `item-b` AND Status = `applykbrules`")
-(define d "4 If item-a = 1, then set item-b value to 1.")
+(define d "3- If item-a = 1, then set item-b value to 1.")
 (kb-insert-rules dbms kb1 tb3 co st c a d p)
 
 
 ; Insert rule.
 (define c "SELECT Value FROM sde_facts WHERE Item = `item-a` AND Value >= 1")
 (define a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `item-c` ) * (-2) ) WHERE Item = `item-c` AND Status = `applykbrules`")
-(define d "5 If item-a >= 1, then set item-c value to item-c * (-2).")
+(define d "4- If item-a >= 1, then set item-c value to item-c * (-2).")
 (kb-insert-rules dbms kb1 tb3 co st c a d p)
 
 
 ; Insert rule.
 (define c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value >= 0")
 (define a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `counter1` ) + 1 ) WHERE Status = `applykbrules` AND Item = `counter1`")
-(define d "6 If counter1 >= zero, then increment counter1 (essentially, always increment counter1).")
+(define d "5- If counter1 >= zero, then increment counter1 (essentially, always increment counter1).")
+(kb-insert-rules dbms kb1 tb3 co st c a d p)
+
+
+; Insert rule.
+(define c "SELECT Value FROM sde_facts WHERE Item = `counter2` AND Value > 2")
+(define a "UPDATE sde_facts SET Value = 0 WHERE Item = `mode-run` AND Status = `applykbrules`")
+(define d "6- Set mode-run = 0 if counter2 reaches a certain value.")
 (kb-insert-rules dbms kb1 tb3 co st c a d p)
 
 
@@ -179,6 +179,27 @@
 ; Please see the notes for example1.scm for additional information on the 
 ; rationale for each step and function in a complete reasoning cycle.
 ;
+; Notce that in this example we can work with two nested loops: one defined
+; by item max-iter, like in example1.scm, and another one that depends on the 
+; value of certain items - counter2 in this case.
+;
+; If you take a look at the rules for this example program, you will see that 
+; like in the case of example1.scm, there is one that sets a value for max-iter 
+; but there is also a rule that establishes that the "outer" loop that defines 
+; the full reasoning cycle depends on the value of variable mode-run 
+; as extracted from item mode-run (see below).
+;
+; You can define rules that modify the value of item mode run and consequently, 
+; variable mode-run, as you desire. For example, the system may continue its 
+; reasoning cycles until a sensor detects something, passes a value to the kb 
+; and then the rules determine that mode-run now equals zero. You can of course 
+; extract any number of values coming from any number of item records at any 
+; time, like it is done here with mode-run.
+;
+; This is of course, a fairly trivial example thatt only shows how things may 
+; interact, but fairly complex reasoning systems can be built in this way. We 
+; will leave that for other example programs.
+;
 (define mode-run 1)
 
 
@@ -187,7 +208,7 @@
 (while (= mode-run 1)
        (ptit " " 1 1 "Working... mode-run still equals one.")
 
-       ; First get thata from any sensors you might have (i.e. peripherals)
+       ; First get data from any sensors you might have (i.e. peripherals)
        (kb-read-sen dbms kb1 1)
 
        ; Now exchange data with any modules, users, etc.
@@ -210,6 +231,8 @@
 
 ; And then show all the facts and their values at the end of the loop.
 (kb-display-table dbms kb1 "SELECT Item, Value FROM sde_facts" "Results of reasoning process: ")
+(newlines 3)
+
 
 
 
