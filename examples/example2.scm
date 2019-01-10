@@ -41,6 +41,10 @@
 (use-modules (gexsys gexsys0))
 
 
+; Welcome.
+(ptit "=" 60 2 "Example2 - A loop that repeats a full reasoning process")
+
+
 ; Vars and initial stuff.
 (define dbms "sqlite3")
 (define kb1 "example2.db")
@@ -51,11 +55,12 @@
 (define tb1 "sde_facts")
 (define tb2 "sde_mem_facts")
 (define it " ")
-
+(define f3 2)
+(define i 0)
 
 ; Creation of the knowledge base. Note that this function also adds some 
 ; records in various data tables by default.
-(kb-create dbms kb1)
+(kb-create dbms kb1 f3)
 
 
 ; Insertion of fact records. Notice that all values v for facts contained in
@@ -67,26 +72,26 @@
 
 ;Insert fact.
 (set! it "counter2")
-(kb-insert-facts dbms kb1 tb1 co st it v p)
-(kb-insert-facts dbms kb1 tb2 co st it v p)
+(kb-insert-facts dbms kb1 tb1 co st it v p f3)
+(kb-insert-facts dbms kb1 tb2 co st it v p f3)
 
 
 ;Insert fact.
 (set! it "item-a")
-(kb-insert-facts dbms kb1 tb1 co st it v p)
-(kb-insert-facts dbms kb1 tb2 co st it v p)
+(kb-insert-facts dbms kb1 tb1 co st it v p f3)
+(kb-insert-facts dbms kb1 tb2 co st it v p f3)
 
 
 ;Insert fact.
 (set! it "item-b")
-(kb-insert-facts dbms kb1 tb1 co st it v p)
-(kb-insert-facts dbms kb1 tb2 co st it v p)
+(kb-insert-facts dbms kb1 tb1 co st it v p f3)
+(kb-insert-facts dbms kb1 tb2 co st it v p f3)
 
 
 ;Insert fact.
 (set! it "item-c")
-(kb-insert-facts dbms kb1 tb1 co st it v p)
-(kb-insert-facts dbms kb1 tb2 co st it v p)
+(kb-insert-facts dbms kb1 tb1 co st it v p f3)
+(kb-insert-facts dbms kb1 tb2 co st it v p f3)
 
 
 ; Insertion of rules.
@@ -99,71 +104,35 @@
 (define c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value = 0")
 (define a "UPDATE sde_facts SET Value = 1 WHERE Status = `applykbrules` AND Item = `max-iter`")
 (define d "1- On a certain value for counter1, set max-iter to a specified value.")
-(kb-insert-rules dbms kb1 tb3 co st c a d p)
+(kb-insert-rules dbms kb1 tb3 co st c a d p f3)
 
 
 ; Insert rule.
 (define c "SELECT Value FROM sde_facts WHERE Item = `item-a` AND Value = 0")
 (define a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `counter2` ) + 1 ) WHERE Status = `applykbrules` AND Item = `counter2`")
 (define d "2- If item-a = zero, then increment counter2.")
-(kb-insert-rules dbms kb1 tb3 co st c a d p)
+(kb-insert-rules dbms kb1 tb3 co st c a d p f3)
 
 
 ; Insert rule.
 (define c "SELECT Value FROM sde_facts WHERE Item = `item-a` AND Value = 1")
 (define a "UPDATE sde_facts SET Value = 1 WHERE Item = `item-b` AND Status = `applykbrules`")
 (define d "3- If item-a = 1, then set item-b value to 1.")
-(kb-insert-rules dbms kb1 tb3 co st c a d p)
+(kb-insert-rules dbms kb1 tb3 co st c a d p f3)
 
 
 ; Insert rule.
 (define c "SELECT Value FROM sde_facts WHERE Item = `item-a` AND Value >= 1")
 (define a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `item-c` ) * (-2) ) WHERE Item = `item-c` AND Status = `applykbrules`")
 (define d "4- If item-a >= 1, then set item-c value to item-c * (-2).")
-(kb-insert-rules dbms kb1 tb3 co st c a d p)
-
-
-; Insert rule.
-(define c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value >= 0")
-(define a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `counter1` ) + 1 ) WHERE Status = `applykbrules` AND Item = `counter1`")
-(define d "5- If counter1 >= zero, then increment counter1 (essentially, always increment counter1).")
-(kb-insert-rules dbms kb1 tb3 co st c a d p)
+(kb-insert-rules dbms kb1 tb3 co st c a d p f3)
 
 
 ; Insert rule.
 (define c "SELECT Value FROM sde_facts WHERE Item = `counter2` AND Value > 2")
 (define a "UPDATE sde_facts SET Value = 0 WHERE Item = `mode-run` AND Status = `applykbrules`")
-(define d "6- Set mode-run = 0 if counter2 reaches a certain value.")
-(kb-insert-rules dbms kb1 tb3 co st c a d p)
-
-
-;/////////////////////
-; This function will increase by ten the values of item-* items. Its goal is to 
-; show how you can provide a helper function to update table sde_facts with 
-; sensorial data. Of course, real functions might be far more complex than this one.
-; For each step of the full reasining cycle you can create one such function to 
-; deal with specific issues related to the step in question. The only condition is 
-; that each such function must return the value one.
-;
-; Arguments:
-; - p_dbms: database management system to be used.
-; - p_kb1: knowledge base name.
-;
-(define (item10 p_dbms p_kb1)
-  (let ((ret 1))
-    (let ((sql-sen "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts  WHERE Item LIKE 'item-%' ) + 10 ) WHERE Item LIKE 'item-%'"))
-      (newline)
-      (let ((db-obj (dbi-open "sqlite3" p_kb1)))
-	(display sql-sen)
-	(newline)
-	(kb-query p_dbms p_kb1 sql-sen)
-        (dbi-close db-obj)
-      )
-    )
-    ; Return the value one.
-    (* ret 1)  
-  )
-)    
+(define d "5- Set mode-run = 0 if counter2 reaches a certain value.")
+(kb-insert-rules dbms kb1 tb3 co st c a d p f3)
 
 
 ; MAIN PROGRAM ----------------------------------------------------------------
@@ -183,45 +152,57 @@
 ; by item max-iter, like in example1.scm, and another one that depends on the 
 ; value of certain items - counter2 in this case.
 ;
-; If you take a look at the rules for this example program, you will see that 
+; If you take a look at the rules for this example program you will see that 
 ; like in the case of example1.scm, there is one that sets a value for max-iter 
 ; but there is also a rule that establishes that the "outer" loop that defines 
 ; the full reasoning cycle depends on the value of variable mode-run 
 ; as extracted from item mode-run (see below).
 ;
-; You can define rules that modify the value of item mode run and consequently, 
+; You can define rules that modify the value of item mode-run and consequently, 
 ; variable mode-run, as you desire. For example, the system may continue its 
 ; reasoning cycles until a sensor detects something, passes a value to the kb 
 ; and then the rules determine that mode-run now equals zero. You can of course 
 ; extract any number of values coming from any number of item records at any 
 ; time, like it is done here with mode-run.
 ;
-; This is of course, a fairly trivial example thatt only shows how things may 
+; This is of course, a fairly trivial example that only shows how things may 
 ; interact, but fairly complex reasoning systems can be built in this way. We 
 ; will leave that for other example programs.
+;
+; I have named Scheme variables that extract values from the kb using function 
+; kb-get-value-from-item exaclty the same as the items from sde_facts from which
+; they extract the value - i.e. a Scheme variable mode-run for example would 
+; extract the value of item mode-run contained in sde_facts, or a scheme 
+; variable counter1 would extract the value from item counter1. You can of 
+; of course use different names but in my opinion it is better to use the same
+; names because once you star extracting lots of values from items, it might 
+; get confusing if the Scheme variables are named otherwise.
 ;
 (define mode-run 1)
 
 
-(ptit "=" 60 2 "Example2 - A loop that repeats a full reasoning process")
-(kb-setup-session dbms kb1)   
+(kb-setup-session dbms kb1 f3)
 (while (= mode-run 1)
-       (ptit " " 1 1 "Working... mode-run still equals one.")
 
+       ; This informs you about the iteration number. Can be useful.
+       (set! i (+ i 1))
+       (pline "+" 60)
+       (pres "Iteration" (number->string i))
+       
        ; First get data from any sensors you might have (i.e. peripherals)
-       (kb-read-sen dbms kb1 1)
+       (kb-read-sen dbms kb1 1 f3)
 
        ; Now exchange data with any modules, users, etc.
-       (kb-read-mod dbms kb1 1)
+       (kb-read-mod dbms kb1 1 f3)
 
        ; Now the system reads each rule contained in sde_rules and if the
        ; SQL code foun in the Condition field delivers a valid result, then  
        ; the SQL code of the Action field will be applied as is.
-       (kb-think dbms kb1 1)
+       (kb-think dbms kb1 1 f3)
 
        ; Now data from sde_facts should be passed back to any actuators you 
        ; might have
-       (kb-write-act dbms kb1 1)
+       (kb-write-act dbms kb1 1 f3)
 
        ; And finally we get the value of item mode-run and pass it to a 
        ; of the same name.

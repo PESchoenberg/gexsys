@@ -44,11 +44,8 @@
 	    kb-read-mod
 	    kb-think
 	    kb-write-act
-	    kb-setup-session-wr
 	    kb-get-value-from-item
-	    kb-display-table
-	    ;kb-setup-session
-	    ))
+	    kb-display-table ))
 
 
 ; kb-create  - creates knowledge base.
@@ -81,8 +78,11 @@
 ; Arguments:
 ; - p_dbms: database management system to be used.
 ; - p_kb1: knowledge base name.
+; - p_f3:
+;   - Set to 1 if you want to see the rules being applied.
+;   - Set to 0 if you don't want to see the rules bing applied (faster).
 ;
-(define (kb-create p_dbms p_kb1)
+(define (kb-create p_dbms p_kb1 p_f3)
   (let ((co "prg0_0"))
     (let ((st "enabled"))
       (let ((tb1 "sde_facts"))      
@@ -92,7 +92,8 @@
 	      (let ((c " "))
 		(let ((d " "))
 
-		  ; Create tables.
+		  ; Create required tables.
+		  (if (> p_f3 0)(ptit " " 1 1 "Creating tables..."))
 		  (kb-create-sde-edges p_dbms p_kb1)
 		  (kb-create-sde-facts p_dbms p_kb1)
 		  (kb-create-sde-mem-facts p_dbms p_kb1)
@@ -100,18 +101,32 @@
 		  (kb-create-sde-rules p_dbms p_kb1)
 
 		  ; Default records for sde-facts and sde_mem_facts.
-		  (kb-insert-facts p_dbms p_kb1 tb1 co st "counter1" 0.0 1.0)
-		  (kb-insert-facts p_dbms p_kb1 tb2 co st "counter1" 0.0 1.0)
-		  (kb-insert-facts p_dbms p_kb1 tb1 co st "mode-run" 0.0 1.0)
-		  (kb-insert-facts p_dbms p_kb1 tb2 co st "mode-run" 1.0 1.0)  
-		  (kb-insert-facts p_dbms p_kb1 tb1 co st "max-iter" 0.0 1.0)
-		  (kb-insert-facts p_dbms p_kb1 tb2 co st "max-iter" 1.0 1.0) 
-
-                  ; Default records for sde_rules.
+		  (if (> p_f3 0)(ptit " " 1 1 "Inserting default facts..."))
+		  (kb-insert-facts p_dbms p_kb1 tb1 co st "counter1" 0.0 1.0 p_f3)
+		  (kb-insert-facts p_dbms p_kb1 tb2 co st "counter1" 0.0 1.0 p_f3)
+		  (kb-insert-facts p_dbms p_kb1 tb1 co st "mode-run" 0.0 1.0 p_f3)
+		  (kb-insert-facts p_dbms p_kb1 tb2 co st "mode-run" 1.0 1.0 p_f3)  
+		  (kb-insert-facts p_dbms p_kb1 tb1 co st "max-iter" 0.0 1.0 p_f3)
+		  (kb-insert-facts p_dbms p_kb1 tb2 co st "max-iter" 1.0 1.0 p_f3) 
+		  (kb-insert-facts p_dbms p_kb1 tb1 co st "session-id" 0.0 1.0 p_f3)
+		  (kb-insert-facts p_dbms p_kb1 tb2 co st "session-id" 0.0 1.0 p_f3) 
+		  
+		  ; Default records for sde_rules.
+		  (if (> p_f3 0)(ptit " " 1 1 "Inserting default rules..."))
 		  (set! c "SELECT Value FROM sde_facts WHERE Item = `counter1`;")
 		  (set! a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `counter1` ) + 1 ) WHERE Status = `applykbrules` AND Item = `counter1`;")
-		  (set! d "Increase counter in one unit on each iteration.")
-		  (kb-insert-rules p_dbms p_kb1 tb3 co st c a d 1.0)
+		  (set! d "1*- Increase counter in one unit on each iteration.")
+		  (kb-insert-rules p_dbms p_kb1 tb3 co st c a d 1.0 p_f3)
+		  
+		  (set! c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value = 0;")
+		  (set! a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `session-id` ) + 1 ) WHERE Status = `applykbrules` AND Item = `session-id`;")
+		  (set! d "2*- Increase value for session id.")
+		  (kb-insert-rules p_dbms p_kb1 tb3 co st c a d 1.0 p_f3)
+
+		  (set! c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value = 0;")
+		  (set! a "UPDATE sde_mem_facts SET Value = ( SELECT Value FROM sde_facts WHERE Item = `session-id` ) WHERE Item = `session-id`;")		  
+		  (set! d "3*- Store new session id in sde_mem_facts.")
+		  (kb-insert-rules p_dbms p_kb1 tb3 co st c a d 1.0 p_f3)		  
 		)
 	      )
 	    )
@@ -297,19 +312,21 @@
 )
     
 
-;kb-query - Performs a single SQL query on closed knowledge base. Use dbi-query 
+; kb-query - Performs a single SQL query on closed knowledge base. Use dbi-query 
 ; directly if the database has been opened.
 ;
 ; Arguments:
 ; - p_dbms: database management system to be used.
 ; - p_kb1: knowledge base name.
 ; - p_sql: SQL query.
+; - p_f3:
+;   - Set to 1 if you want to see the rules being applied.
+;   - Set to 0 if you don't want to see the rules bing applied (faster).
 ;
-(define (kb-query p_dbms p_kb1 p_sql)
+(define (kb-query p_dbms p_kb1 p_sql p_f3)
+  (if (equal? p_f3 2)(ptit " " 1 1 p_sql))
   (let ((db-obj (dbi-open p_dbms p_kb1)))
     (dbi-query db-obj p_sql)
-    (display p_sql)
-    (newline)
     (dbi-close db-obj)
   )
 )  
@@ -326,8 +343,11 @@
 ; - p_it: item.
 ; - p_v: value.
 ; - p_p: probability.
+; - p_f3:
+;   - Set to 1 if you want to see the rules being applied.
+;   - Set to 0 if you don't want to see the rules bing applied (faster).
 ;
-(define (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st p_it p_v p_p)
+(define (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st p_it p_v p_p p_f3)
   (let ((a1 "INSERT INTO "))
     (let ((a2 " (Context, Status, Item, Value, Prob) VALUES ('"))
       (let ((a3 "','"))
@@ -344,7 +364,7 @@
 			    (let ((b11 (string-append a2 b10)))
 			      (let ((b12 (string-append p_tb1 b11)))
 				(let ((sql (string-append a1 b12)))
-				  (kb-query p_dbms p_kb1 sql)
+				  (kb-query p_dbms p_kb1 sql p_f3)
 				)
 			      )
 			    )
@@ -376,8 +396,11 @@
 ; - p_a: action.
 ; - p_d: description.
 ; - p_p: probability.
+; - p_f3:
+;   - Set to 1 if you want to see the SQL query being applied.
+;   - Set to 0 if you don't want to see the SQL query being applied (faster).
 ;
-(define (kb-insert-rules p_dbms p_kb1 p_tb1 p_co p_st p_c p_a p_d p_p)
+(define (kb-insert-rules p_dbms p_kb1 p_tb1 p_co p_st p_c p_a p_d p_p p_f3)
   (let ((a1 "INSERT INTO "))
     (let ((a2 " (Context, Status, Condition, Action, Description, Prob) VALUES ('"))
       (let ((a3 "','"))
@@ -396,7 +419,7 @@
 				(let ((b12 (string-append a2 b11)))
 				  (let ((b13 (string-append p_tb1 b12)))
 				    (let ((sql (string-append a1 b13)))
-				      (kb-query p_dbms p_kb1 sql)
+				      (kb-query p_dbms p_kb1 sql p_f3)
 				    )
 				  )
 				)
@@ -424,14 +447,19 @@
 ; Arguments:
 ; - p_dbms: database management system to be used.
 ; - p_kb1: knowledge base name.
+; - p_f3:
+;   - Set to 1 if you want to see the SQL query being applied.
+;   - Set to 0 if you don't want to see the SQL query being applied (faster).
 ;
-(define (kb-setup-session p_dbms p_kb1)
+(define (kb-setup-session p_dbms p_kb1 p_f3)
 
+  (if (> p_f3 0)(ptit " " 1 1 "Setting up session..."))
+  
   ; Clean up things a bit.
-  (kb-query p_dbms p_kb1 "VACUUM;")
+  (kb-query p_dbms p_kb1 "VACUUM;" p_f3)
 
   ; Delete left-overs from past sessions i.e. rules loaded from sde_prg_rules.
-  (kb-query p_dbms p_kb1 "DELETE FROM sde_rules WHERE Context NOT LIKE 'prg0_0';")
+  (kb-query p_dbms p_kb1 "DELETE FROM sde_rules WHERE Context NOT LIKE 'prg0_0';" p_f3)
 
   ; These two updates are requred to replace some characters that are used
   ; to input SQL as data itself into an SQLite table, since both Scheme and 
@@ -442,19 +470,19 @@
   ; introduced in fields Condition and Action in sde*rules tables using SQL 
   ; statements are SQL statements themselves.
   ;
-  (kb-query p_dbms p_kb1 "UPDATE sde_rules SET Condition = REPLACE ( Condition, \"`\", \"'\");")
-  (kb-query p_dbms p_kb1 "UPDATE sde_rules SET Action = REPLACE ( Action, \"`\", \"'\");")
-  (kb-query p_dbms p_kb1 "UPDATE sde_prg_rules SET Condition = REPLACE ( Condition, \"`\", \"'\");")
-  (kb-query p_dbms p_kb1 "UPDATE sde_prg_rules SET Action = REPLACE ( Action, \"`\", \"'\");")
+  (kb-query p_dbms p_kb1 "UPDATE sde_rules SET Condition = REPLACE ( Condition, \"`\", \"'\");" p_f3)
+  (kb-query p_dbms p_kb1 "UPDATE sde_rules SET Action = REPLACE ( Action, \"`\", \"'\");" p_f3)
+  (kb-query p_dbms p_kb1 "UPDATE sde_prg_rules SET Condition = REPLACE ( Condition, \"`\", \"'\");" p_f3)
+  (kb-query p_dbms p_kb1 "UPDATE sde_prg_rules SET Action = REPLACE ( Action, \"`\", \"'\");" p_f3)
   
   ; Set the Value field of sde_facts to the default values contained in sde_mem_facts.
-  (kb-query p_dbms p_kb1 "UPDATE sde_facts SET Value = COALESCE( ( SELECT sde_mem_facts.Value FROM sde_mem_facts WHERE ( sde_facts.Item = sde_mem_facts.Item AND sde_mem_facts.Status = 'enabled' AND sde_mem_facts.Context = 'prg0_0' ) ), 0);")
+  (kb-query p_dbms p_kb1 "UPDATE sde_facts SET Value = COALESCE( ( SELECT sde_mem_facts.Value FROM sde_mem_facts WHERE ( sde_facts.Item = sde_mem_facts.Item AND sde_mem_facts.Status = 'enabled' AND sde_mem_facts.Context = 'prg0_0' ) ), 0);" p_f3)
 
   ; Set the Prob field of sde_facts to the default values contained in sde_mem_facts.
-  (kb-query p_dbms p_kb1 "UPDATE sde_facts SET Prob = COALESCE( ( SELECT sde_mem_facts.Prob FROM sde_mem_facts WHERE ( sde_facts.Item = sde_mem_facts.Item AND sde_mem_facts.Status = 'enabled' AND sde_mem_facts.Context = 'prg0_0' ) ), 0);")
+  (kb-query p_dbms p_kb1 "UPDATE sde_facts SET Prob = COALESCE( ( SELECT sde_mem_facts.Prob FROM sde_mem_facts WHERE ( sde_facts.Item = sde_mem_facts.Item AND sde_mem_facts.Status = 'enabled' AND sde_mem_facts.Context = 'prg0_0' ) ), 0);" p_f3)
 
   ; Initialize status for first cycle.
-  (kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'sentodb' WHERE Status != 'disabled';")
+  (kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'sentodb' WHERE Status != 'disabled';" p_f3)
   
 )
  
@@ -465,9 +493,13 @@
 ; - p_dbms: database management system to be used.
 ; - p_kb1: knowledge base name.
 ; - p_f1: control value for sensor data function.
+; - p_f3:
+;   - Set to 1 if you want to see the SQL query being applied.
+;   - Set to 0 if you don't want to see the SQL query being applied (faster).
 ;
-(define (kb-read-sen p_dbms p_kb1 p_f1)
-  (if (= p_f1 1)(kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'getfromnetwork' WHERE Status = 'sentodb' OR Status = 'enabled';"))
+(define (kb-read-sen p_dbms p_kb1 p_f1 p_f3)
+  (if (> p_f3 0)(ptit " " 1 1 "Reading sensors..."))
+  (if (= p_f1 1)(kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'getfromnetwork' WHERE Status = 'sentodb' OR Status = 'enabled';" p_f3))
 )
 
   
@@ -482,10 +514,14 @@
 ; Arguments:
 ; - p_dbms: database management system to be used.
 ; - p_kb1: knowledge base name.
-; - p_f2: control value for module data function.
+; - p_f1: control value for module data function.
+; - p_f3:
+;   - Set to 1 if you want to see the SQL query being applied.
+;   - Set to 0 if you don't want to see the SQL query being applied (faster).
 ;
-(define (kb-read-mod p_dbms p_kb1 p_f2)
-  (if (= p_f2 1)(kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'applykbrules' WHERE Status = 'getfromnetwork';"))
+(define (kb-read-mod p_dbms p_kb1 p_f1 p_f3)
+  (if (> p_f3 0)(ptit " " 1 1 "Reading modules..."))
+  (if (= p_f1 1)(kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'applykbrules' WHERE Status = 'getfromnetwork';" p_f3))
 )
 
   
@@ -494,9 +530,13 @@
 ; Arguments:
 ; - p_dbms: database management system to be used.
 ; - p_kb1: knowledge base name.
-; - p_f3: control value for reasoning data function.
+; - p_f1: control value for think data function.
+; - p_f3:
+;   - Set to 1 if you want to see the rules being applied.
+;   - Set to 0 if you don't want to see the rules being applied (faster).
 ;
-(define (kb-think p_dbms p_kb1 p_f3)
+(define (kb-think p_dbms p_kb1 p_f1 p_f3)
+  (if (> p_f3 0)(ptit " " 1 1 "Applying rules..."))
   (let (( db-obj (dbi-open "sqlite3" p_kb1)))
     (let ((sql-res1 #t))
       (let ((sql-res2 #f))
@@ -508,6 +548,7 @@
                   (dbi-query db-obj "SELECT Condition, Action from sde_rules WHERE Status = 'enabled'")
 		  (set! sql-res1 (dbi-get_row db-obj))
                   (while (not (equal? sql-res1 #f))
+			 
                          ; Get Condition and action into different string variables.
 		         (set! con (list-ref sql-res1 0))
 		         (set! act (list-ref sql-res1 1))		       
@@ -516,27 +557,20 @@
 		         (set! i (+ i 1))
 		       
 		         ; Test if condition applies. If it does, apply action.
-		         (newline)
-		         (display "Step 1.4......................")
-		         (newline)
 		         (dbi-query db-obj condition)
 		         (set! sql-res2 (dbi-get_row db-obj))
 
 		         ; Equiv to if.
 		         (while (not (equal? sql-res2 #f))
-			        (display "Step 1.4.1....................")
-			        (newline)
-			        (display condition)
-			        (newline)
-			        (write sql-res2)
-			        (newline)
-			        (display action)
 			        (dbi-query db-obj action)
-			        (newline)
+				(if (equal? p_f3 2)(begin (ptit "-" 60 1 "Rule applied: ")
+							  (ptit " " 1 1 condition)
+							  (ptit " " 1 1 action)
+						   )
+				)
 			        (set! sql-res2 #f)
 		         )
-		         (newline)
-		         (display "Step 1.5......................")
+
 		         (set! sql-res2 #f)
 		         (dbi-query db-obj "SELECT Condition, Action from sde_rules WHERE Status = 'enabled'")
 		         (let ((j 0))
@@ -545,7 +579,6 @@
 				        (set! j (+ j 1))
 			   )	
 		         )
-		         (newlines 3)
 		  )
 		)
 	      )  
@@ -555,14 +588,10 @@
       )
     )
     (dbi-close db-obj)
-  )	
-
-  ;
-  (display "Step 2.......................")
-  (newline)
+  )
   
   ; Once all rules in sde_rules have been reviewed, change status.
-  (if (= p_f3 1)(kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'sentodb' WHERE Status = 'applykbrules';"))
+  (if (= p_f1 1)(kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'sentodb' WHERE Status = 'applykbrules';" p_f3))
 )
 
   
@@ -571,25 +600,14 @@
 ; Arguments:
 ; - p_dbms: database management system to be used.
 ; - p_kb1: knowledge base name.
-; - p_f4: control value for actuator data function.
+; - p_f1: control value for actuator data function.
+; - p_f3:
+;   - Set to 1 if you want to see the SQL query being applied.
+;   - Set to 0 if you don't want to see the SQL query being applied (faster).
 ;
-(define (kb-write-act p_dbms p_kb1 p_f4)
-  (if (= p_f4 1)(kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'sentodb' WHERE Status = 'applykbrules';"))
-)
-
-
-; kb-setup-session-wr - setup session wrapper. call kb_setup_session 
-; once, when p_i is at its maximum value within a recursively decrementing
-; loop.
-;
-; Arguments:
-; - p_dbms: database management system to be used.
-; - p_kb1: knowledge base name.
-; - p_i1: i value (see kb-cycle-lim).
-; - p_n1: n value (see kb-cycle-lim).
-;
-(define (kb-setup-session-wr p_dbms p_kb1 p_i1 p_n1)
-  (if (equal? p_i1 p_n1)(kb-setup-session p_dbms p_kb1))
+(define (kb-write-act p_dbms p_kb1 p_f1 p_f3)
+  (if (> p_f3 0)(ptit " " 1 1 "Sending data to actuators..."))
+  (if (= p_f1 1)(kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'sentodb' WHERE Status = 'applykbrules';" p_f3))
 )
 
 
@@ -611,13 +629,13 @@
 	      (let ((sql-sen (string-append b (string-append p_tb1 (string-append c (string-append p_it1 a))))))
 	        (dbi-query db-obj sql-sen)
 	        (set! sql-res (dbi-get_row db-obj))
-		(newline)
 	      )
 	    )
 	  )
         )
         (dbi-close db-obj)    
-      )   
+      )
+      
       ; If sql-res false (no record found) set ret to zero. Otherwise, set it
       ; to to adequate value obtained by cdr.
       (if (equal? sql-res #f)
@@ -637,15 +655,12 @@
 ; - p_kb1: knowledge base name.
 ; - p_sql: SQL query.
 ; - p_tit: title or header for listing.
-;   - "q": to use p_sql as value for p_tit.
+;   - "sql": to use p_sql as value for p_tit.
 ;
 (define (kb-display-table p_dbms p_kb1 p_sql p_tit)
   (let ((sql-res #f))
-    (if (equal? p_tit "q")(set! p_tit p_sql))
-    (pline "-" 60)
-    (display p_tit)
-    (newline)
-    (newline)
+    (if (equal? p_tit "sql")(set! p_tit p_sql))
+    (ptit "=" 60 1 p_tit)
     (let ((db-obj (dbi-open "sqlite3" p_kb1)))   
       (dbi-query db-obj p_sql)
       (display db-obj)
