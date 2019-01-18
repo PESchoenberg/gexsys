@@ -49,7 +49,7 @@
 ; Vars and initial stuff.
 (define dbms "sqlite3")
 (define kb1 "example1.db")
-(define co "prg0_0")
+(define co "prg0.1")
 (define st "enabled")
 (define v 0.0)
 (define p 1.0)

@@ -51,7 +51,7 @@
 ; Vars and initial stuff.
 (define dbms "sqlite3")
 (define kb1 "example3.db")
-(define co "prg0_0")
+(define co "prg0.1")
 (define st "enabled")
 (define v 0.0)
 (define p 1.0)
@@ -93,6 +93,9 @@
 (set! it "plan-desc")
 (kb-insert-facts dbms kb1 tb1 co st it v p f3)
 (kb-insert-facts dbms kb1 tb2 co st it v p f3)
+
+
+
 
 
 ; Now we will inser some facts that will describe the following graph:
@@ -159,7 +162,7 @@
 
 ; Standard context value to indicate that a rule always resides on sde_rules
 ; and not sde_meme_rules.
-(define co "prg0_0") 
+(define co "prg0.1") 
 
 
 ; Insert rule.

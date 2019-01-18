@@ -83,59 +83,77 @@
 ;   - Set to 0 if you don't want to see the rules bing applied (faster).
 ;
 (define (kb-create p_dbms p_kb1 p_f3)
-  (let ((co "prg0_0"))
-    (let ((st "enabled"))
-      (let ((tb1 "sde_facts"))      
-	(let ((tb2 "sde_mem_facts"))
-	  (let ((tb3 "sde_rules"))
-	    (let ((a " "))
-	      (let ((c " "))
-		(let ((d " "))
+  (let ((co "prg0.1")
+	(st "enabled")
+	(tb1 "sde_facts")
+	(tb2 "sde_mem_facts")
+	(tb3 "sde_rules")
+	(a " ")
+	(c " ")
+	(d " "))
 
-		  ; Create required tables.
-		  (if (> p_f3 0)(ptit " " 1 1 "Creating tables..."))
-		  (kb-create-sde-edges p_dbms p_kb1)
-		  (kb-create-sde-facts p_dbms p_kb1)
-		  (kb-create-sde-mem-facts p_dbms p_kb1)
-		  (kb-create-sde-prg-rules p_dbms p_kb1)
-		  (kb-create-sde-rules p_dbms p_kb1)
+    (if (> p_f3 0)(ptit " " 1 1 "Creating tables..."))
+    (kb-create-sde-edges p_dbms p_kb1)
+    (kb-create-sde-facts p_dbms p_kb1)
+    (kb-create-sde-mem-facts p_dbms p_kb1)
+    (kb-create-sde-prg-rules p_dbms p_kb1)
+    (kb-create-sde-rules p_dbms p_kb1)
 
-		  ; Default records for sde-facts and sde_mem_facts.
-		  (if (> p_f3 0)(ptit " " 1 1 "Inserting default facts..."))
-		  (kb-insert-facts p_dbms p_kb1 tb1 co st "counter1" 0.0 1.0 p_f3)
-		  (kb-insert-facts p_dbms p_kb1 tb2 co st "counter1" 0.0 1.0 p_f3)
-		  (kb-insert-facts p_dbms p_kb1 tb1 co st "mode-run" 0.0 1.0 p_f3)
-		  (kb-insert-facts p_dbms p_kb1 tb2 co st "mode-run" 1.0 1.0 p_f3)  
-		  (kb-insert-facts p_dbms p_kb1 tb1 co st "max-iter" 0.0 1.0 p_f3)
-		  (kb-insert-facts p_dbms p_kb1 tb2 co st "max-iter" 1.0 1.0 p_f3) 
-		  (kb-insert-facts p_dbms p_kb1 tb1 co st "session-id" 0.0 1.0 p_f3)
-		  (kb-insert-facts p_dbms p_kb1 tb2 co st "session-id" 0.0 1.0 p_f3) 
+    (if (> p_f3 0)(ptit " " 1 1 "Inserting default facts..."))
+    (kb-insert-facts p_dbms p_kb1 tb1 co st "counter1" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 tb2 co st "counter1" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 tb1 co st "mode-run" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 tb2 co st "mode-run" 1.0 1.0 p_f3)  
+    (kb-insert-facts p_dbms p_kb1 tb1 co st "max-iter" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 tb2 co st "max-iter" 1.0 1.0 p_f3) 
+    (kb-insert-facts p_dbms p_kb1 tb1 co st "session-id" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 tb2 co st "session-id" 0.0 1.0 p_f3) 
+    (kb-insert-facts p_dbms p_kb1 tb1 co st "mode-prg-load" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 tb2 co st "mode-prg-load" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 tb1 co st "mode-prg-purge" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 tb2 co st "mode-prg-purge" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 tb1 co st "cur-ver-prg0" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 tb2 co st "cur-ver-prg0" 0.1 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 tb1 co st "load-order-prg0" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 tb2 co st "load-order-prg0" 0.0 1.0 p_f3)    
+    
+    (if (> p_f3 0)(ptit " " 1 1 "Inserting default rules..."))
+    (set! c "SELECT Value FROM sde_facts WHERE Item = `counter1`;")
+    (set! a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `counter1` ) + 1 ) WHERE Status = `applykbrules` AND Item = `counter1`;")
+    (set! d "1*- Increase counter in one unit on each iteration.")
+    (kb-insert-rules p_dbms p_kb1 tb3 co st c a d 1.0 p_f3)
 		  
-		  ; Default records for sde_rules.
-		  (if (> p_f3 0)(ptit " " 1 1 "Inserting default rules..."))
-		  (set! c "SELECT Value FROM sde_facts WHERE Item = `counter1`;")
-		  (set! a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `counter1` ) + 1 ) WHERE Status = `applykbrules` AND Item = `counter1`;")
-		  (set! d "1*- Increase counter in one unit on each iteration.")
-		  (kb-insert-rules p_dbms p_kb1 tb3 co st c a d 1.0 p_f3)
-		  
-		  (set! c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value = 0;")
-		  (set! a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `session-id` ) + 1 ) WHERE Status = `applykbrules` AND Item = `session-id`;")
-		  (set! d "2*- Increase value for session id.")
-		  (kb-insert-rules p_dbms p_kb1 tb3 co st c a d 1.0 p_f3)
+    (set! c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value = 0;")
+    (set! a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `session-id` ) + 1 ) WHERE Status = `applykbrules` AND Item = `session-id`;")
+    (set! d "2*- Increase value for session id.")
+    (kb-insert-rules p_dbms p_kb1 tb3 co st c a d 1.0 p_f3)
 
-		  (set! c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value = 0;")
-		  (set! a "UPDATE sde_mem_facts SET Value = ( SELECT Value FROM sde_facts WHERE Item = `session-id` ) WHERE Item = `session-id`;")		  
-		  (set! d "3*- Store new session id in sde_mem_facts.")
-		  (kb-insert-rules p_dbms p_kb1 tb3 co st c a d 1.0 p_f3)		  
-		)
-	      )
-	    )
-	  )
-	)
-      )	    
-    )
-  )
-)
+    (set! c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value = 0;")
+    (set! a "UPDATE sde_mem_facts SET Value = ( SELECT Value FROM sde_facts WHERE Item = `session-id` ) WHERE Item = `session-id`;")		  
+    (set! d "3*- Store new session id in sde_mem_facts.")
+    (kb-insert-rules p_dbms p_kb1 tb3 co st c a d 1.0 p_f3)
+
+    (set! c "SELECT Value FROM sde_facts WHERE Item = `mode-prg-purge` AND Value = 1;")
+    (set! a (strings-append (list "DELETE FROM sde_rules WHERE Context !=`" co "`;") 0))
+    (set! d "4*- Delete anything on sde_rules that has a context different from co if mode-prg-purge = 1.")
+    (kb-insert-rules p_dbms p_kb1 tb3 co st c a d 1.0 p_f3)
+
+    (set! c "SELECT Value FROM sde_facts WHERE Item = `mode-prg-purge` AND Value = 1;")
+    (set! a "UPDATE sde_facts SET Value = 0 WHERE Item = `mode-prg-purge`;")
+    (set! d "5*- Once prgs have been purged reset mode-prg-purge.")
+    (kb-insert-rules p_dbms p_kb1 tb3 co st c a d 1.0 p_f3)
+
+    (set! c "SELECT E FROM ( SELECT COUNT(*) AS E FROM sde_rules WHERE Context = ( SELECT ( `prg` || CAST( ( SELECT Value FROM sde_facts WHERE Item = `mode-prg-load` ) AS TEXT ) ) ) ) WHERE E = 0;")
+    (set! a"INSERT INTO sde_rules (Context, Status, Condition, Action, Description, Prob) SELECT Context, Status, Condition, Action, Description, Prob FROM sde_prg_rules WHERE sde_prg_rules.Context = ( SELECT ( `prg` || CAST( ( SELECT Value FROM sde_facts WHERE Item = `mode-prg-load` ) AS TEXT ) ) );")
+    (set! d "6*- Load into sde_rules from sde_prg_rules the program specified at mode-prg-load.")
+    (kb-insert-rules p_dbms p_kb1 tb3 co st c a d 1.0 p_f3)
+
+    (set! c "SELECT E FROM ( SELECT COUNT(*) AS E FROM sde_rules WHERE Context = ( SELECT ( `prg` || CAST( ( SELECT Value FROM sde_facts WHERE Item = `mode-prg-load` ) AS TEXT ) ) ) ) WHERE E > 0;")
+    (set! a "UPDATE sde_facts SET Value = 0 WHERE Item = `mode-prg-load`;")
+    (set! d "5*- Once the required prg has been loaded reset mode-prg-load.")
+    (kb-insert-rules p_dbms p_kb1 tb3 co st c a d 1.0 p_f3)
+    
+    ))
 
 
 
@@ -174,9 +192,7 @@
                          Trcnode  TEXT    DEFAULT na,
                          Property TEXT    DEFAULT na);
                          ")
-    (dbi-close db-obj)
-  )
-)
+    (dbi-close db-obj)))
 
 
 ; kb-create-sde-facts - creates table sde_facts.
@@ -208,9 +224,7 @@
               Value   REAL    DEFAULT (0),
               Prob    REAL    DEFAULT (1) CONSTRAINT prob_bet_0_1 CHECK (Prob >= 0 AND Prob <= 1) );
               ")
-    (dbi-close db-obj)
-  )
-)
+    (dbi-close db-obj)))
 
 
 ; kb-create-sde-mem-facts - creates table sde_mem_facts.
@@ -237,9 +251,7 @@
               Value   REAL    DEFAULT (0),
               Prob    REAL    DEFAULT (1) CONSTRAINT prob_bet_0_1 CHECK (Prob >= 0 AND Prob <= 1) );
               ")
-    (dbi-close db-obj)
-  )
-)
+    (dbi-close db-obj)))
 
 
 ; kb-create-sde-prg-rules - creates table sde_prg_rules.
@@ -272,9 +284,7 @@
               Description TEXT    DEFAULT na,
               Prob        REAL    CONSTRAINT prob_def_val DEFAULT (1) CONSTRAINT prob_bet_0_1 CHECK (Prob >= 0 AND Prob <= 1) );
               ")
-    (dbi-close db-obj)
-  )
-)
+    (dbi-close db-obj)))
 
 
 ; kb-create-sde-rules - creates table sde_rules.
@@ -307,9 +317,7 @@
               Description TEXT    DEFAULT na,
               Prob        REAL    CONSTRAINT prob_def_val DEFAULT (1) CONSTRAINT prob_bet_0_1 CHECK (Prob >= 0 AND Prob <= 1) );
               ")
-    (dbi-close db-obj)
-  )
-)
+    (dbi-close db-obj)))
     
 
 ; kb-query - Performs a single SQL query on closed knowledge base. Use dbi-query 
@@ -327,9 +335,7 @@
   (if (equal? p_f3 2)(ptit " " 1 1 p_sql))
   (let ((db-obj (dbi-open p_dbms p_kb1)))
     (dbi-query db-obj p_sql)
-    (dbi-close db-obj)
-  )
-)  
+    (dbi-close db-obj)))
 
 
 ; kb-insert-facts - inserts a record on a sde*facts table.
@@ -348,43 +354,16 @@
 ;   - Set to 0 if you don't want to see the rules bing applied (faster).
 ;
 (define (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st p_it p_v p_p p_f3)
-  (let ((a1 "INSERT INTO "))
-    (let ((a2 " (Context, Status, Item, Value, Prob) VALUES ('"))
-      (let ((a3 "','"))
-	(let ((a4 "')"))
-	  (let ((b2 (string-append (number->string p_p) a4)))
-	    (let ((b3 (string-append a3 b2)))
-	      (let ((b4 (string-append (number->string p_v) b3)))
-		(let ((b5 (string-append a3 b4)))
-		  (let ((b6 (string-append p_it b5)))
-		    (let ((b7 (string-append a3 b6)))
-		      (let ((b8 (string-append p_st b7)))
-			(let ((b9 (string-append a3 b8)))
-			  (let ((b10 (string-append p_co b9)))
-			    (let ((b11 (string-append a2 b10)))
-			      (let ((b12 (string-append p_tb1 b11)))
-				(let ((sql (string-append a1 b12)))
-				  (kb-query p_dbms p_kb1 sql p_f3)
-				)
-			      )
-			    )
-			  )
-			)
-		      )
-		    )
-		  )
-		)
-	      )
-	    )
-	  )
-	)
-      )
-    )
-  )
-)
+  (let ((a1 "INSERT INTO ")
+	(a2 " (Context, Status, Item, Value, Prob) VALUES ('")
+	(a3 "','")
+	(a4 "')")
+	(sql ""))
+    (set! sql (strings-append (list a1 p_tb1 a2 p_co a3 p_st a3 p_it a3 (number->string p_v) a3 (number->string p_p) a4) 0))
+    (kb-query p_dbms p_kb1 sql p_f3)))
 
 
-; kb-insert-rules - inserts a record on a sde*rules table.
+; kb-insert-rules2 - inserts a record on a sde*rules table.
 ;
 ; Arguments:
 ; - p_dbms: database management system to be used.
@@ -401,44 +380,13 @@
 ;   - Set to 0 if you don't want to see the SQL query being applied (faster).
 ;
 (define (kb-insert-rules p_dbms p_kb1 p_tb1 p_co p_st p_c p_a p_d p_p p_f3)
-  (let ((a1 "INSERT INTO "))
-    (let ((a2 " (Context, Status, Condition, Action, Description, Prob) VALUES ('"))
-      (let ((a3 "','"))
-	(let ((a4 "')"))
-	  (let ((b1 (string-append (number->string p_p) a4)))
-	    (let ((b2 (string-append a3 b1)))
-	      (let ((b3 (string-append p_d b2)))
-		(let ((b4 (string-append a3 b3)))		    
-		  (let ((b5 (string-append p_a b4)))
-		    (let ((b6 (string-append a3 b5)))
-		      (let ((b7 (string-append p_c b6)))
-			(let ((b8 (string-append a3 b7)))
-			  (let ((b9 (string-append p_st b8)))
-			    (let ((b10 (string-append a3 b9)))
-			      (let ((b11 (string-append p_co b10)))
-				(let ((b12 (string-append a2 b11)))
-				  (let ((b13 (string-append p_tb1 b12)))
-				    (let ((sql (string-append a1 b13)))
-				      (kb-query p_dbms p_kb1 sql p_f3)
-				    )
-				  )
-				)
-			      )
-			    )
-			  )
-			)
-		      )
-		    )
-		  )
-		)
-	      )
-	    )
-	  )
-	)
-      )
-    )
-  )
-)
+  (let ((a1 "INSERT INTO ")
+	(a2 " (Context, Status, Condition, Action, Description, Prob) VALUES ('")
+	(a3 "','")
+	(a4 "')")
+	(sql ""))
+    (set! sql (strings-append (list a1 p_tb1 a2 p_co a3 p_st a3 p_c a3 p_a a3 p_d a3 (number->string p_p) a4) 0))
+    (kb-query p_dbms p_kb1 sql p_f3)))
 
 
 ; kb-setup-session - loads the default values contained in sde_mem_facts 
@@ -459,7 +407,7 @@
   (kb-query p_dbms p_kb1 "VACUUM;" p_f3)
 
   ; Delete left-overs from past sessions i.e. rules loaded from sde_prg_rules.
-  (kb-query p_dbms p_kb1 "DELETE FROM sde_rules WHERE Context NOT LIKE 'prg0_0';" p_f3)
+  (kb-query p_dbms p_kb1 "DELETE FROM sde_rules WHERE Context NOT LIKE 'prg0.1';" p_f3)
 
   ; These two updates are requred to replace some characters that are used
   ; to input SQL as data itself into an SQLite table, since both Scheme and 
@@ -476,15 +424,13 @@
   (kb-query p_dbms p_kb1 "UPDATE sde_prg_rules SET Action = REPLACE ( Action, \"`\", \"'\");" p_f3)
   
   ; Set the Value field of sde_facts to the default values contained in sde_mem_facts.
-  (kb-query p_dbms p_kb1 "UPDATE sde_facts SET Value = COALESCE( ( SELECT sde_mem_facts.Value FROM sde_mem_facts WHERE ( sde_facts.Item = sde_mem_facts.Item AND sde_mem_facts.Status = 'enabled' AND sde_mem_facts.Context = 'prg0_0' ) ), 0);" p_f3)
+  (kb-query p_dbms p_kb1 "UPDATE sde_facts SET Value = COALESCE( ( SELECT sde_mem_facts.Value FROM sde_mem_facts WHERE ( sde_facts.Item = sde_mem_facts.Item AND sde_mem_facts.Status = 'enabled' AND sde_mem_facts.Context = 'prg0.1' ) ), 0);" p_f3)
 
   ; Set the Prob field of sde_facts to the default values contained in sde_mem_facts.
-  (kb-query p_dbms p_kb1 "UPDATE sde_facts SET Prob = COALESCE( ( SELECT sde_mem_facts.Prob FROM sde_mem_facts WHERE ( sde_facts.Item = sde_mem_facts.Item AND sde_mem_facts.Status = 'enabled' AND sde_mem_facts.Context = 'prg0_0' ) ), 0);" p_f3)
+  (kb-query p_dbms p_kb1 "UPDATE sde_facts SET Prob = COALESCE( ( SELECT sde_mem_facts.Prob FROM sde_mem_facts WHERE ( sde_facts.Item = sde_mem_facts.Item AND sde_mem_facts.Status = 'enabled' AND sde_mem_facts.Context = 'prg0.1' ) ), 0);" p_f3)
 
   ; Initialize status for first cycle.
-  (kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'sentodb' WHERE Status != 'disabled';" p_f3)
-  
-)
+  (kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'sentodb' WHERE Status != 'disabled';" p_f3))
  
 
 ; kb-read-sen - read information from non-human sensors or sources.
@@ -499,8 +445,7 @@
 ;
 (define (kb-read-sen p_dbms p_kb1 p_f1 p_f3)
   (if (> p_f3 0)(ptit " " 1 1 "Reading sensors..."))
-  (if (= p_f1 1)(kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'getfromnetwork' WHERE Status = 'sentodb' OR Status = 'enabled';" p_f3))
-)
+  (if (= p_f1 1)(kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'getfromnetwork' WHERE Status = 'sentodb' OR Status = 'enabled';" p_f3)))
 
   
 ; kb-read-mod - read information from external modules. If you want to have user 
@@ -521,8 +466,7 @@
 ;
 (define (kb-read-mod p_dbms p_kb1 p_f1 p_f3)
   (if (> p_f3 0)(ptit " " 1 1 "Reading modules..."))
-  (if (= p_f1 1)(kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'applykbrules' WHERE Status = 'getfromnetwork';" p_f3))
-)
+  (if (= p_f1 1)(kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'applykbrules' WHERE Status = 'getfromnetwork';" p_f3)))
 
   
 ; kb-think - apply rules from sde_rules to all items sporting status 'applykbrules'.
@@ -538,61 +482,41 @@
 (define (kb-think p_dbms p_kb1 p_f1 p_f3)
   (if (> p_f3 0)(ptit " " 1 1 "Applying rules..."))
   (let (( db-obj (dbi-open "sqlite3" p_kb1)))
-    (let ((sql-res1 #t))
-      (let ((sql-res2 #f))
-	(let ((condition "c"))
-	  (let ((action "a"))
-	    (let ((con "c"))
-	      (let ((act "a"))
-		(let ((i 0))
-                  (dbi-query db-obj "SELECT Condition, Action from sde_rules WHERE Status = 'enabled'")
-		  (set! sql-res1 (dbi-get_row db-obj))
-                  (while (not (equal? sql-res1 #f))
-			 
-                         ; Get Condition and action into different string variables.
-		         (set! con (list-ref sql-res1 0))
-		         (set! act (list-ref sql-res1 1))		       
-		         (set! condition (cdr con))
-		         (set! action (cdr act))
-		         (set! i (+ i 1))
-		       
-		         ; Test if condition applies. If it does, apply action.
-		         (dbi-query db-obj condition)
-		         (set! sql-res2 (dbi-get_row db-obj))
-
-		         ; Equiv to if.
-		         (while (not (equal? sql-res2 #f))
-			        (dbi-query db-obj action)
-				(if (equal? p_f3 2)(begin (ptit "-" 60 1 "Rule applied: ")
-							  (ptit " " 1 1 condition)
-							  (ptit " " 1 1 action)
-						   )
-				)
-			        (set! sql-res2 #f)
-		         )
-
-		         (set! sql-res2 #f)
-		         (dbi-query db-obj "SELECT Condition, Action from sde_rules WHERE Status = 'enabled'")
-		         (let ((j 0))
-			   (while (not (equal? i j))
-				        (set! sql-res1 (dbi-get_row db-obj))
-				        (set! j (+ j 1))
-			   )	
-		         )
-		  )
-		)
-	      )  
-	    )
- 	  )		   
-        )
-      )
-    )
-    (dbi-close db-obj)
-  )
-  
+    (let ((sql-res1 #t)
+	  (sql-res2 #f)
+	  (condition "c")
+	  (action "a")
+	  (con "c")
+	  (act "a")
+	  (i 0))
+      (dbi-query db-obj "SELECT Condition, Action from sde_rules WHERE Status = 'enabled'")
+      (set! sql-res1 (dbi-get_row db-obj))
+      (while (not (equal? sql-res1 #f))
+	     ; Get Condition and action into different string variables.
+	     (set! con (list-ref sql-res1 0))
+	     (set! act (list-ref sql-res1 1))		       
+	     (set! condition (cdr con))
+	     (set! action (cdr act))
+	     (set! i (+ i 1))		       
+	     ; Test if condition applies. If it does, apply action.
+	     (dbi-query db-obj condition)
+	     (set! sql-res2 (dbi-get_row db-obj))
+	     ; Equiv to if.
+	     (while (not (equal? sql-res2 #f))
+		    (dbi-query db-obj action)
+		    (if (equal? p_f3 2)(begin (ptit "-" 60 1 "Rule applied: ")
+					      (ptit " " 1 1 condition)
+					      (ptit " " 1 1 action)))
+		    (set! sql-res2 #f))
+	     (set! sql-res2 #f)
+	     (dbi-query db-obj "SELECT Condition, Action from sde_rules WHERE Status = 'enabled'")
+	     (let ((j 0))
+	       (while (not (equal? i j))
+		      (set! sql-res1 (dbi-get_row db-obj))
+		      (set! j (+ j 1))))))
+  (dbi-close db-obj))
   ; Once all rules in sde_rules have been reviewed, change status.
-  (if (= p_f1 1)(kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'sentodb' WHERE Status = 'applykbrules';" p_f3))
-)
+  (if (= p_f1 1)(kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'sentodb' WHERE Status = 'applykbrules';" p_f3)))
 
   
 ; kb-write-act - write to actuators.
@@ -607,8 +531,7 @@
 ;
 (define (kb-write-act p_dbms p_kb1 p_f1 p_f3)
   (if (> p_f3 0)(ptit " " 1 1 "Sending data to actuators..."))
-  (if (= p_f1 1)(kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'sentodb' WHERE Status = 'applykbrules';" p_f3))
-)
+  (if (= p_f1 1)(kb-query p_dbms p_kb1 "UPDATE sde_facts SET Status = 'sentodb' WHERE Status = 'applykbrules';" p_f3)))
 
 
 ; kb-get-value-from-item - returns the value of an item as a numeric variable.
@@ -620,34 +543,24 @@
 ; - p_it1: item.
 ;
 (define (kb-get-value-from-item p_dbms p_kb1 p_tb1 p_it1)
-  (let ((ret 0))
-    (let ((sql-res #f))
-      (let ((db-obj (dbi-open "sqlite3" p_kb1)))  
-        (let ((a "';"))
-  	  (let ((b "SELECT Value FROM "))
-	    (let ((c " WHERE Item = '"))
-	      (let ((sql-sen (string-append b (string-append p_tb1 (string-append c (string-append p_it1 a))))))
-	        (dbi-query db-obj sql-sen)
-	        (set! sql-res (dbi-get_row db-obj))
-	      )
-	    )
-	  )
-        )
-        (dbi-close db-obj)    
-      )
+  (let ((ret 0)
+	(sql-res #f)
+	(a "';")
+	(b "SELECT Value FROM ")(c " WHERE Item = '"))
+    (let ((db-obj (dbi-open "sqlite3" p_kb1)))
+      (let ((sql-sen (string-append b (string-append p_tb1 (string-append c (string-append p_it1 a))))))
+	(dbi-query db-obj sql-sen)
+	(set! sql-res (dbi-get_row db-obj)))
+        (dbi-close db-obj))
       
-      ; If sql-res false (no record found) set ret to zero. Otherwise, set it
-      ; to to adequate value obtained by cdr.
-      (if (equal? sql-res #f)
-	  (set! ret 0)
-	  (begin (set! ret (cdr (list-ref sql-res 0))))
-      )
-    )
-    (* ret 1)
-  )
-)
+    ; If sql-res false (no record found) set ret to zero. Otherwise, set it
+    ; to to adequate value obtained by cdr.
+    (if (equal? sql-res #f)
+	(set! ret 0)
+	(begin (set! ret (cdr (list-ref sql-res 0)))))
+    (* ret 1)))
 
-
+  
 ; kb-display-table - Displays the content of a table as defined by p_sql.
 ;
 ; Arguments:
@@ -670,16 +583,12 @@
       (set! sql-res (dbi-get_row db-obj))
       (while (not (equal? sql-res #f))
 	     (display sql-res)(newline)
-	     (set! sql-res (dbi-get_row db-obj))
-      )
+	     (set! sql-res (dbi-get_row db-obj)))
       (display sql-res)
       (newline)
       (dbi-close db-obj)
       (write (dbi-get_row db-obj))
-      (newline)
-    )
-  )
-)
+      (newline))))
       
 
 
