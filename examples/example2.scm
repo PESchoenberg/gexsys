@@ -48,7 +48,7 @@
 ; Vars and initial stuff.
 (define dbms "sqlite3")
 (define kb1 "example2.db")
-(define co "prg0_0")
+(define co "prg0.1")
 (define st "enabled")
 (define v 0.0)
 (define p 1.0)
@@ -97,7 +97,7 @@
 ; Insertion of rules.
 (define tb3 "sde_rules")
 ; (define tb2 "sde_mem_rules") ; We would need this only if rules are stored as programs.
-(define co "prg0_0") ; Standard context value to indicate that a rule always resides on sde_rules and not sde_meme_rules.
+(define co "prg0.1") ; Standard context value to indicate that a rule always resides on sde_rules and not sde_meme_rules.
 
 
 ; Insert rule.
@@ -179,8 +179,6 @@
 ; get confusing if the Scheme variables are named otherwise.
 ;
 (define mode-run 1)
-
-
 (kb-setup-session dbms kb1 f3)
 (while (= mode-run 1)
 
@@ -206,8 +204,7 @@
 
        ; And finally we get the value of item mode-run and pass it to a 
        ; of the same name.
-       (set! mode-run (kb-get-value-from-item dbms kb1 "sde_facts" "mode-run"))
-)
+       (set! mode-run (kb-get-value-from-item dbms kb1 "sde_facts" "mode-run")))
 
 
 ; And then show all the facts and their values at the end of the loop.
