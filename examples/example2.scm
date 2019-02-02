@@ -18,7 +18,7 @@
 ;
 ; ==============================================================================
 ;
-; Copyright (C) 2018  Pablo Edronkin (pablo.edronkin at yahoo.com)
+; Copyright (C) 2018 - 2019 Pablo Edronkin (pablo.edronkin at yahoo.com)
 ;
 ;   This program is free software: you can redistribute it and/or modify
 ;   it under the terms of the GNU Lesser General Public License as published by
@@ -36,9 +36,10 @@
 ; ==============================================================================
 
 
-(use-modules (dbi dbi))
-(use-modules (grsp grsp0))
-(use-modules (gexsys gexsys0))
+; Required modules.
+(use-modules (dbi dbi)
+	     (grsp grsp0)
+	     (gexsys gexsys0))
 
 
 ; Welcome.
@@ -57,6 +58,7 @@
 (define it " ")
 (define f3 2)
 (define i 0)
+
 
 ; Creation of the knowledge base. Note that this function also adds some 
 ; records in various data tables by default.
@@ -101,8 +103,8 @@
 
 
 ; Insert rule.
-(define c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value = 0")
-(define a "UPDATE sde_facts SET Value = 1 WHERE Status = `applykbrules` AND Item = `max-iter`")
+(define c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value = 2")
+(define a "UPDATE sde_facts SET Value = 4 WHERE Status = `applykbrules` AND Item = `max-iter`")
 (define d "1- On a certain value for counter1, set max-iter to a specified value.")
 (kb-insert-rules dbms kb1 tb3 co st c a d p f3)
 
@@ -110,28 +112,35 @@
 ; Insert rule.
 (define c "SELECT Value FROM sde_facts WHERE Item = `item-a` AND Value = 0")
 (define a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `counter2` ) + 1 ) WHERE Status = `applykbrules` AND Item = `counter2`")
-(define d "2- If item-a = zero, then increment counter2.")
+(define d "2- If item-a = zero, then increment counter2 om 1.")
+(kb-insert-rules dbms kb1 tb3 co st c a d p f3)
+
+
+; Insert rule.
+(define c "SELECT Value FROM sde_facts WHERE Item = `item-a` AND Value > 0")
+(define a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `counter2` ) + 2 ) WHERE Status = `applykbrules` AND Item = `counter2`")
+(define d "3- If item-a > zero, then increment counter2 on 2.")
 (kb-insert-rules dbms kb1 tb3 co st c a d p f3)
 
 
 ; Insert rule.
 (define c "SELECT Value FROM sde_facts WHERE Item = `item-a` AND Value = 1")
 (define a "UPDATE sde_facts SET Value = 1 WHERE Item = `item-b` AND Status = `applykbrules`")
-(define d "3- If item-a = 1, then set item-b value to 1.")
+(define d "4- If item-a = 1, then set item-b value to 1.")
 (kb-insert-rules dbms kb1 tb3 co st c a d p f3)
 
 
 ; Insert rule.
 (define c "SELECT Value FROM sde_facts WHERE Item = `item-a` AND Value >= 1")
 (define a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `item-c` ) * (-2) ) WHERE Item = `item-c` AND Status = `applykbrules`")
-(define d "4- If item-a >= 1, then set item-c value to item-c * (-2).")
+(define d "5- If item-a >= 1, then set item-c value to item-c * (-2).")
 (kb-insert-rules dbms kb1 tb3 co st c a d p f3)
 
 
 ; Insert rule.
-(define c "SELECT Value FROM sde_facts WHERE Item = `counter2` AND Value > 2")
+(define c "SELECT Value FROM sde_facts WHERE Item = `counter2` AND Value > ( SELECT Value FROM sde_facts WHERE Item = `max-iter`  )")
 (define a "UPDATE sde_facts SET Value = 0 WHERE Item = `mode-run` AND Status = `applykbrules`")
-(define d "5- Set mode-run = 0 if counter2 reaches a certain value.")
+(define d "7- Set mode-run = 0 if counter2 reaches a certain value.")
 (kb-insert-rules dbms kb1 tb3 co st c a d p f3)
 
 
@@ -139,7 +148,7 @@
 
 
 ; Here we will run a loop with the same functions used on example1.scm, but
-; with slightly different runes letting full control to the kb. The system
+; with slightly different rules letting full control to the kb. The system
 ; assigns value 1 to fact mode-run, then that fact value passed from the kb 
 ; to a variable named mode-run on the program, and that finally stops
 ; the loop and finishes the program. Consider that a change in mode-run depends 
@@ -194,7 +203,7 @@
        (kb-read-mod dbms kb1 1 f3)
 
        ; Now the system reads each rule contained in sde_rules and if the
-       ; SQL code foun in the Condition field delivers a valid result, then  
+       ; SQL code found in the Condition field delivers a valid result, then  
        ; the SQL code of the Action field will be applied as is.
        (kb-think dbms kb1 1 f3)
 

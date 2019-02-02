@@ -9,7 +9,7 @@
 ;
 ; ==============================================================================
 ;
-; Copyright (C) 2018  Pablo Edronkin (pablo.edronkin at yahoo.com)
+; Copyright (C) 2018 - 2019 Pablo Edronkin (pablo.edronkin at yahoo.com)
 ;
 ;   This program is free software: you can redistribute it and/or modify
 ;   it under the terms of the GNU Lesser General Public License as published by
@@ -31,13 +31,13 @@
   #:use-module (dbi dbi)
   #:use-module (grsp grsp0)
   #:export (kb-create
-	    kb-create-sde-edges
 	    kb-create-sde-facts
 	    kb-create-sde-mem-facts
 	    kb-create-sde-prg-rules
 	    kb-create-sde-rules
 	    kb-query
 	    kb-insert-facts
+	    kb-insert-default-facts
 	    kb-insert-rules
 	    kb-insert-sde-rules
 	    kb-insert-sde-prg-rules
@@ -96,90 +96,14 @@
 	(d " "))
 
     (if (> p_f3 0)(ptit " " 1 1 "Creating tables..."))
-    (kb-create-sde-edges p_dbms p_kb1)
     (kb-create-sde-facts p_dbms p_kb1)
     (kb-create-sde-mem-facts p_dbms p_kb1)
     (kb-create-sde-prg-rules p_dbms p_kb1)
     (kb-create-sde-rules p_dbms p_kb1)
 
     (if (> p_f3 0)(ptit " " 1 1 "Inserting default facts..."))
+    (kb-insert-default-facts p_dbms p_kb1 tb1 tb2 co st p_f3)
 
-    ; counter1 is the main cycle counter.
-    (kb-insert-facts p_dbms p_kb1 tb1 co st "counter1" 0.0 1.0 p_f3)
-    (kb-insert-facts p_dbms p_kb1 tb2 co st "counter1" 0.0 1.0 p_f3)
-
-    ; mode-run 
-    (kb-insert-facts p_dbms p_kb1 tb1 co st "mode-run" 0.0 1.0 p_f3)
-    (kb-insert-facts p_dbms p_kb1 tb2 co st "mode-run" 1.0 1.0 p_f3)
-
-    ; max-inter indicates the max number of iterations to run during kb-think.
-    (kb-insert-facts p_dbms p_kb1 tb1 co st "max-iter" 0.0 1.0 p_f3)
-    (kb-insert-facts p_dbms p_kb1 tb2 co st "max-iter" 1.0 1.0 p_f3)
-
-    ; session-id creates an unique identification for each session of an
-    ; existing knowledge base.
-    (kb-insert-facts p_dbms p_kb1 tb1 co st "session-id" 0.0 1.0 p_f3)
-    (kb-insert-facts p_dbms p_kb1 tb2 co st "session-id" 0.0 1.0 p_f3)
-
-    ; model-prg-load contains the number fo program to be loaded from 
-    ; sde-prg-rules to sde_rules.
-    (kb-insert-facts p_dbms p_kb1 tb1 co st "mode-prg-load" 0.0 1.0 p_f3)
-    (kb-insert-facts p_dbms p_kb1 tb2 co st "mode-prg-load" 0.0 1.0 p_f3)
-
-    ; mode-prg-purge if 1 loads prg2, which deletes every rule except those
-    ; with context prg0.
-    (kb-insert-facts p_dbms p_kb1 tb1 co st "mode-prg-purge" 0.0 1.0 p_f3)
-    (kb-insert-facts p_dbms p_kb1 tb2 co st "mode-prg-purge" 0.0 1.0 p_f3)
-
-    ; mode-prg-end contains the number of program to be deleted from sde_rules.
-    ; program scan be deleted by other means as well but it is better form to
-    ; do so using this flag.
-    (kb-insert-facts p_dbms p_kb1 tb1 co st "mode-prg-end" 0.0 1.0 p_f3)
-    (kb-insert-facts p_dbms p_kb1 tb2 co st "mode-prg-end" 0.0 1.0 p_f3)
-
-    ; mode-prg-create indicates the number of a program to be created by 
-    ; loading prg2, which contains the code that creates the records required
-    ; to register a new program within the kb.
-    (kb-insert-facts p_dbms p_kb1 tb1 co st "mode-prg-create" 0.0 1.0 p_f3)
-    (kb-insert-facts p_dbms p_kb1 tb2 co st "mode-prg-create" 0.0 1.0 p_f3)    
-
-    ; init-ok, when it has a value 0 indicates that the process of loading
-    ; initial stuff is still going on. when 1, inidcates that all initila
-    ; processes have been finished and so the actual work within the kb can 
-    ; be initiated.
-    (kb-insert-facts p_dbms p_kb1 tb1 co st "init-ok" 0.0 1.0 p_f3)
-    (kb-insert-facts p_dbms p_kb1 tb2 co st "init-ok" 0.0 1.0 p_f3) 
-    
-    ; prg0.1 is a dummy denomination for primary rules.
-    (kb-insert-facts p_dbms p_kb1 tb1 co st "cur-ver-prg0" 0.0 1.0 p_f3) 
-    (kb-insert-facts p_dbms p_kb1 tb2 co st "cur-ver-prg0" 0.1 1.0 p_f3)
-    (kb-insert-facts p_dbms p_kb1 tb1 co st "load-order-prg0" 0.0 1.0 p_f3)
-    (kb-insert-facts p_dbms p_kb1 tb2 co st "load-order-prg0" 0.0 1.0 p_f3)
-
-    ; prg1.0 - program creation.
-    (kb-insert-facts p_dbms p_kb1 tb1 co st "cur-ver-prg1" 0.0 1.0 p_f3)
-    (kb-insert-facts p_dbms p_kb1 tb2 co st "cur-ver-prg1" 1.0 1.0 p_f3)
-    (kb-insert-facts p_dbms p_kb1 tb1 co st "load-order-prg1" 0.0 1.0 p_f3)
-    (kb-insert-facts p_dbms p_kb1 tb2 co st "load-order-prg1" 2.0 1.0 p_f3)
-
-    ; prg2.0 - 
-    (kb-insert-facts p_dbms p_kb1 tb1 co st "cur-ver-prg2" 0.0 1.0 p_f3)
-    (kb-insert-facts p_dbms p_kb1 tb2 co st "cur-ver-prg2" 2.0 1.0 p_f3)
-    (kb-insert-facts p_dbms p_kb1 tb1 co st "load-order-prg2" 0.0 1.0 p_f3)
-    (kb-insert-facts p_dbms p_kb1 tb2 co st "load-order-prg2" 4.0 1.0 p_f3)
-
-    ; prg3.0 - 
-    (kb-insert-facts p_dbms p_kb1 tb1 co st "cur-ver-prg3" 0.0 1.0 p_f3)
-    (kb-insert-facts p_dbms p_kb1 tb2 co st "cur-ver-prg3" 3.0 1.0 p_f3)
-    (kb-insert-facts p_dbms p_kb1 tb1 co st "load-order-prg3" 0.0 1.0 p_f3)
-    (kb-insert-facts p_dbms p_kb1 tb2 co st "load-order-prg3" 0.0 1.0 p_f3)
-    
-    ; prg24 - initial program batch loader.
-    (kb-insert-facts p_dbms p_kb1 tb1 co st "cur-ver-prg24" 0.0 1.0 p_f3)
-    (kb-insert-facts p_dbms p_kb1 tb2 co st "cur-ver-prg24" 24.0 1.0 p_f3)
-    (kb-insert-facts p_dbms p_kb1 tb1 co st "load-order-prg24" 0.0 1.0 p_f3)
-    (kb-insert-facts p_dbms p_kb1 tb2 co st "load-order-prg24" 1.0 1.0 p_f3)
-    
     (if (> p_f3 0)(ptit " " 1 1 "Inserting primary rules..."))
     (kb-insert-sde-rules p_dbms p_kb1 p_f3)
     
@@ -190,11 +114,11 @@
 
 
 ; kb-insert-sde-rules - Inserts a batch of rules into sde_rules; in order  
-; to keep things tidy, it is better to insert the rules that go directly into 
-; sde-rules from those that are stored into sde_prg_rules during the creation 
+; to keep things tidy it is better to insert the rules that go directly into 
+; sde_rules from those that are stored into sde_prg_rules during the creation 
 ; of the knowledge base. The rules that go into sde_rules stay all the time 
 ; in that table and it is better to keep the number of them as low as 
-; possible, while the rules that go into sde_prg rules are intended to be
+; possible while the rules that go into sde_prg rules are intended to be
 ; loaded and unloaded from sde_prg_rules into sde_rules on demand.
 ;
 ; Arguments:
@@ -254,11 +178,11 @@
 
 
 ; kb-insert-sde-prg-rules - Inserts secondary rules into sde_prg_rules; in order
-; to keep things tidy, it is better to insert the rules that go directly into 
-; sde-rules from those that are stored into sde_prg_rules during the creation 
+; to keep things tidy it is better to insert the rules that go directly into 
+; sde_rules from those that are stored into sde_prg_rules during the creation 
 ; of the knowledge base. The rules that go into sde_rules stay all the time 
 ; in that table and it is better to keep the number of them as low as 
-; possible, while the rules that go into sde_prg rules are intended to be
+; possible while the rules that go into sde_prg rules are intended to be
 ; loaded and unloaded from sde_prg_rules into sde_rules on demand.
 ;
 ; Arguments:
@@ -277,7 +201,7 @@
 	(d " "))
 
     ; These are secondary programs that are stored in sde_prg_rules and then 
-    ; loaded into sde_rules on demand.
+    ; iserted or deleted into sde_rules on demand.
     
     ; prg24.0 is the batch loader for programs required on init.
     (set! co "prg24.0")
@@ -293,51 +217,79 @@
     (set! a "UPDATE sde_facts SET Value = ( SELECT Value FROM sde_facts WHERE Item = `cur-ver-prg2` ) WHERE Item = `mode-prg-load`;")
     (set! d "2- Load prg2.")
     (kb-insert-rules p_dbms p_kb1 tb co st c a d 1.0 p_f3)
-  
+
+    ; Program is running on this iter. This will tell when was the last
+    ; iteration when the program was running.
+    (set! c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value >= 0;")
+    (set! a "UPDATE sde_facts SET Value = ( SELECT Value FROM sde_facts WHERE Item = `counter1` ) WHERE Item = `last-exec-prg24`;")
+    (set! d "3- Update last-exec value to present interation value.")
+    (kb-insert-rules p_dbms p_kb1 tb co st c a d 1.0 p_f3)
+    
     ; Del prg24 fact value.
-    (set! c "SELECT Value FROM sde_facts WHERE Item = `init-ok` AND Value = 1;")
+    (set! c "SELECT Value FROM sde_facts WHERE Item = `init-ok` AND Value >= 2;")
     (set! a "DELETE FROM sde_rules WHERE Context LIKE `prg24.%`;")
-    (set! d "3- Delete prg24 once init-ok = 1.")
+    (set! d "4- Delete prg24 once init-ok >= 2.")
     (kb-insert-rules p_dbms p_kb1 tb co st c a d 1.0 p_f3) 
 
     
-    ; prg1.0 uodates the session id value for each session started with the kb,
-    ; and then deletes itself.
+    ; prg1.0 performs several init chores.
     (set! co "prg1.0")
 
+    ; Clean up things a bit.
+    (set! c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value >= 0;")
+    (set! a "VACUUM;")
+    (set! d "1- Tidy up things with a vacuum command.")
+    (kb-insert-rules p_dbms p_kb1 tb co st c a d 1.0 p_f3)
+    
     ; Session id increment.
     (set! c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value >= 0;")
     (set! a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `session-id` ) + 1 ) WHERE Status = `applykbrules` AND Item = `session-id`;")
-    (set! d "1- Increase value for session id.")
+    (set! d "2- Increase value for session id.")
     (kb-insert-rules p_dbms p_kb1 tb co st c a d 1.0 p_f3)
 
     ; Session id mem update.
     (set! c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value >= 0;")
     (set! a "UPDATE sde_mem_facts SET Value = ( SELECT Value FROM sde_facts WHERE Item = `session-id` ) WHERE Item = `session-id`;")		  
-    (set! d "2- Store new session id in sde_mem_facts.")
+    (set! d "3- Store new session id in sde_mem_facts.")
     (kb-insert-rules p_dbms p_kb1 tb co st c a d 1.0 p_f3)
 
+    ; Increase init-ok value.
+    (set! c "SELECT Value FROM sde_facts WHERE Item = `init-ok` AND Value >= 0;")
+    (set! a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `init-ok` ) + 1) WHERE Item = `init-ok`;")
+    (set! d "4- Increase value of init-ok.")
+    (kb-insert-rules p_dbms p_kb1 tb co st c a d 1.0 p_f3) 
+
+    ; Program is running on this iter. This will tell when was the last
+    ; iteration when the program was running.
+    (set! c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value >= 0;")
+    (set! a "UPDATE sde_facts SET Value = ( SELECT Value FROM sde_facts WHERE Item = `counter1` ) WHERE Item = `last-exec-prg1`;")
+    (set! d "5- Update last-exec value to present interation value.")
+    (kb-insert-rules p_dbms p_kb1 tb co st c a d 1.0 p_f3)
+    
+    ; Delete left-overs from past sessions i.e. rules loaded from sde_prg_rules.
+    (set! c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value >= 0;")
+    (set! a "UPDATE sde_facts SET Value = 1 WHERE Item = `mode-prg-purge`;")
+    (set! d "5- Delete left-overs from past sessions.")
+    (kb-insert-rules p_dbms p_kb1 tb co st c a d 1.0 p_f3)
+    
     ; Delete prg1.%.
     (set! c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value >= 0;")
     (set! a "DELETE FROM sde_rules WHERE Context LIKE `prg1.%`;")
-    (set! d "3- Delete prg1.")
+    (set! d "6- Delete prg1.")
     (kb-insert-rules p_dbms p_kb1 tb co st c a d 1.0 p_f3) 
 
     
-    ; prg2.0 .
-    (set! co "prg2.0")
-    
-
-    ; prg3.0 is the batch purge program. It deletes from sde_rules annything
-    ; that doesn't belong to context prog0.% oritself, and after performing
+    ; prg2.0 is the batch purge program. It deletes from sde_rules annything
+    ; that doesn't belong to context prg0.% or itself, and after performing
     ; those deletions, it deletes itself. This is required so that the 
     ; after deleting everything else can update the mode-prg-purge item.
-    (set! co "prg3.0")    
+    (set! co "prg2.0")    
 
-    ;Delete all programs that are not co if mode purge is on.
+    ;Delete all programs that are not co if mode purge is on. **********************************************
     (set! c "SELECT Value FROM sde_facts WHERE Item = `mode-prg-purge` AND Value = 1;")
-    (set! a (strings-append (list "DELETE FROM sde_rules WHERE ( Context NOT LIKE `prg0.%` AND Context NOT LIKE `prg3.%` );") 0))
-    (set! d "1- Delete anything on sde_rules that has a context different from prg0 or prg3 if mode-prg-purge = 1.")
+    ;(set! a (strings-append (list "DELETE FROM sde_rules WHERE ( Context NOT LIKE `prg0.%` AND Context NOT LIKE `prg3.%` );") 0))
+    (set! a "DELETE FROM sde_rules WHERE ( Context NOT LIKE `prg0.%` AND Context NOT LIKE `prg2.%` );")
+    (set! d "1- Delete anything on sde_rules that has a context different from prg0 or prg2 if mode-prg-purge = 1.")
     (kb-insert-rules p_dbms p_kb1 tb co st c a d 1.0 p_f3)
 
     ; Reset mode prg purge fact value.
@@ -346,50 +298,26 @@
     (set! d "2- Once prgs have been purged reset mode-prg-purge.")
     (kb-insert-rules p_dbms p_kb1 tb co st c a d 1.0 p_f3)
 
-    ; Delete prg3.%.
+    ; Increase init-ok value.
+    (set! c "SELECT Value FROM sde_facts WHERE Item = `init-ok` AND Value >= 0;")
+    (set! a "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts WHERE Item = `init-ok` ) + 1) WHERE Item = `init-ok`;")
+    (set! d "3- Increase value of init-ok.")
+    (kb-insert-rules p_dbms p_kb1 tb co st c a d 1.0 p_f3) 
+
+    ; Program is running on this iter. This will tell when was the last
+    ; iteration when the program was running.
+    (set! c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value >= 0;")
+    (set! a "UPDATE sde_facts SET Value = ( SELECT Value FROM sde_facts WHERE Item = `counter1` ) WHERE Item = `last-exec-prg2`;")
+    (set! d "4- Update last-exec value to present interation value.")
+    (kb-insert-rules p_dbms p_kb1 tb co st c a d 1.0 p_f3)
+    
+    ; Delete prg2.%.
     (set! c "SELECT Value FROM sde_facts WHERE Item = `mode-prg-purge` AND Value >= 0;")
-    (set! a "DELETE FROM sde_rules WHERE Context LIKE `prg3.%`;")
-    (set! d "3- Delete prg3.")
+    (set! a "DELETE FROM sde_rules WHERE Context LIKE `prg2.%`;")
+    (set! d "5- Delete prg2.")
     (kb-insert-rules p_dbms p_kb1 tb co st c a d 1.0 p_f3)    
     
     ))
-
-; kb-create-sde-edges - creates table sde_edges.
-;
-; This function creates table sde_edges within knowledge base p_kb1; sde_edges
-; is might be useful for defining network relationships if you want to use an
-; approximation to a graph paradigm on top of the relational model used by
-; SQLite. While not covering all aspects of network databases, this function
-; serves its purpose as proof of concept to build one on top of a relational
-; system. In theory almost any database model could be build on top of a
-; relational one, albeit it would not necessarily in the most efficient
-; fashion. This function will overwrite any prior instance of the table it
-; creates in p_kb1 if the knowledge base is located in the same working
-; directory where you intend to use the function.
-;
-; Arguments:
-; - p_dbms: database management system to be used.
-; - p_kb1: knowledge base name.
-;
-(define (kb-create-sde-edges p_dbms p_kb1)
-  (let ((db-obj (dbi-open p_dbms p_kb1)))
-    (dbi-query db-obj "DROP TABLE IF EXISTS sde_edges;")
-    (dbi-query db-obj "CREATE TABLE sde_edges (
-                         Id       INTEGER PRIMARY KEY ASC ON CONFLICT ROLLBACK AUTOINCREMENT UNIQUE ON CONFLICT ROLLBACK,
-                         Context  TEXT    DEFAULT na,
-                         Status   TEXT    DEFAULT na,
-                         Item     TEXT    DEFAULT na UNIQUE ON CONFLICT ROLLBACK,
-                         Value    REAL    DEFAULT (0),
-                         Prob     REAL    DEFAULT (1) CONSTRAINT prob_bet_0_1 CHECK (Prob >= 0 AND Prob <= 1),
-                         Fkbnode  TEXT    DEFAULT na,
-                         Ftbnode  TEXT    DEFAULT na,
-                         Frcnode  TEXT    DEFAULT na,
-                         Tkbnode  TEXT    DEFAULT na,
-                         Ttbnode  TEXT    DEFAULT na,
-                         Trcnode  TEXT    DEFAULT na,
-                         Property TEXT    DEFAULT na);
-                         ")
-    (dbi-close db-obj)))
 
 
 ; kb-create-sde-facts - creates table sde_facts.
@@ -560,7 +488,102 @@
     (kb-query p_dbms p_kb1 sql p_f3)))
 
 
-; kb-insert-rules2 - inserts a record on a sde*rules table.
+; kb-insert-default-facts - inserts all default facts into a kb.
+;
+; Arguments:
+; - p_dbms: database management system to be used.
+; - p_kb1: knowledge base name.
+; - p_tb1: the name of an sde*facts table (sde_facts, sde_mem_facts).
+; - p_tb2: the name of an sde*facts table (sde_facts, sde_mem_facts).
+; - p_co: context.
+; - p_st: status.
+; - p_f3:
+;   - Set to 1 if you want to see the rules being applied.
+;   - Set to 0 if you don't want to see the rules bing applied (faster).
+;
+(define (kb-insert-default-facts p_dbms p_kb1 p_tb1 p_tb2 p_co p_st p_f3)
+    ; counter1 is the main cycle counter.
+    (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st "counter1" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb2 p_co p_st "counter1" 0.0 1.0 p_f3)
+
+    ; mode-run 
+    (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st "mode-run" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb2 p_co p_st "mode-run" 1.0 1.0 p_f3)
+
+    ; max-inter indicates the max number of iterations to run during kb-think.
+    (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st "max-iter" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb2 p_co p_st "max-iter" 1.0 1.0 p_f3)
+
+    ; session-id creates an unique identification for each session of an
+    ; existing knowledge base.
+    (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st "session-id" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb2 p_co p_st "session-id" 0.0 1.0 p_f3)
+
+    ; model-prg-load contains the number fo program to be loaded from 
+    ; sde-prg-rules to sde_rules.
+    (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st "mode-prg-load" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb2 p_co p_st "mode-prg-load" 0.0 1.0 p_f3)
+
+    ; mode-prg-purge if 1 loads prg2, which deletes every rule except those
+    ; with context prg0.
+    (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st "mode-prg-purge" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb2 p_co p_st "mode-prg-purge" 0.0 1.0 p_f3)
+
+    ; mode-prg-end contains the number of program to be deleted from sde_rules.
+    ; program scan be deleted by other means as well but it is better form to
+    ; do so using this flag.
+    (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st "mode-prg-end" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb2 p_co p_st "mode-prg-end" 0.0 1.0 p_f3)
+
+    ; mode-prg-create indicates the number of a program to be created by 
+    ; loading prg2, which contains the code that creates the records required
+    ; to register a new program within the kb.
+    (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st "mode-prg-create" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb2 p_co p_st "mode-prg-create" 0.0 1.0 p_f3)    
+
+    ; init-ok, when it has a value 0 indicates that the process of loading
+    ; initial stuff is still going on. when 1, inidcates that all initila
+    ; processes have been finished and so the actual work within the kb can 
+    ; be initiated.
+    (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st "init-ok" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb2 p_co p_st "init-ok" 0.0 1.0 p_f3) 
+    
+    ; prg0.1 is a dummy denomination for primary rules.
+    (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st "cur-ver-prg0" 0.0 1.0 p_f3) 
+    (kb-insert-facts p_dbms p_kb1 p_tb2 p_co p_st "cur-ver-prg0" 0.1 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st "load-order-prg0" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb2 p_co p_st "load-order-prg0" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st "last-exec-prg0" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb2 p_co p_st "last-exec-prg0" 0.0 1.0 p_f3)
+
+    ; prg1.0 - session setup.
+    (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st "cur-ver-prg1" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb2 p_co p_st "cur-ver-prg1" 1.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st "load-order-prg1" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb2 p_co p_st "load-order-prg1" 4.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st "last-exec-prg1" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb2 p_co p_st "last-exec-prg1" 0.0 1.0 p_f3)
+    
+    ; prg2.0 - purge programs.
+    (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st "cur-ver-prg2" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb2 p_co p_st "cur-ver-prg2" 2.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st "load-order-prg2" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb2 p_co p_st "load-order-prg2" 6.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb2 p_co p_st "last-exec-prg2" 0.0 1.0 p_f3)
+    
+    ; prg24 - initial program batch loader.
+    (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st "cur-ver-prg24" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb2 p_co p_st "cur-ver-prg24" 24.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st "load-order-prg24" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb2 p_co p_st "load-order-prg24" 2.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st "last-exec-prg24" 0.0 1.0 p_f3)
+    (kb-insert-facts p_dbms p_kb1 p_tb2 p_co p_st "last-exec-prg24" 0.0 1.0 p_f3)
+
+    )
+
+
+
+; kb-insert-rules - inserts a record on a sde*rules table.
 ;
 ; Arguments:
 ; - p_dbms: database management system to be used.
@@ -601,10 +624,10 @@
   (if (> p_f3 0)(ptit " " 1 1 "Setting up session..."))
   
   ; Clean up things a bit.
-  (kb-query p_dbms p_kb1 "VACUUM;" p_f3)
+  ;(kb-query p_dbms p_kb1 "VACUUM;" p_f3)
 
   ; Delete left-overs from past sessions i.e. rules loaded from sde_prg_rules.
-  (kb-query p_dbms p_kb1 "DELETE FROM sde_rules WHERE Context NOT LIKE 'prg0.1';" p_f3)
+  ;(kb-query p_dbms p_kb1 "DELETE FROM sde_rules WHERE Context NOT LIKE 'prg0.1';" p_f3)
 
   ; These two updates are requred to replace some characters that are used
   ; to input SQL as data itself into an SQLite table, since both Scheme and 

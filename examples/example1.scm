@@ -19,7 +19,7 @@
 ;
 ; ==============================================================================
 ;
-; Copyright (C) 2018  Pablo Edronkin (pablo.edronkin at yahoo.com)
+; Copyright (C) 2018 - 2019 Pablo Edronkin (pablo.edronkin at yahoo.com)
 ;
 ;   This program is free software: you can redistribute it and/or modify
 ;   it under the terms of the GNU Lesser General Public License as published by
@@ -37,10 +37,10 @@
 ; ==============================================================================
 
 
-(use-modules (dbi dbi))
-(use-modules (grsp grsp0))
-(use-modules (gexsys gexsys0))
-
+; Required modules.
+(use-modules (dbi dbi)
+	     (grsp grsp0)
+	     (gexsys gexsys0))
 
 ; Welcome.
 (ptit "=" 60 2 "Example1 - One single iteration of a full reasoning process.")
@@ -158,8 +158,6 @@
     (let ((sql-sen "UPDATE sde_facts SET Value = ( ( SELECT Value FROM sde_facts  WHERE Item LIKE 'item-%' ) + 10 ) WHERE Item LIKE 'item-%';"))
       (newline)
       (let ((db-obj (dbi-open "sqlite3" p_kb1)))
-	;(display sql-sen)
-	;(newline)
 	(kb-query p_dbms p_kb1 sql-sen 0)
         (dbi-close db-obj)
       )
