@@ -21,7 +21,7 @@
 ;
 ; ==============================================================================
 ;
-; Copyright (C) 2018  Pablo Edronkin (pablo.edronkin at yahoo.com)
+; Copyright (C) 2018 - 2019 Pablo Edronkin (pablo.edronkin at yahoo.com)
 ;
 ;   This program is free software: you can redistribute it and/or modify
 ;   it under the terms of the GNU Lesser General Public License as published by
@@ -39,9 +39,10 @@
 ; ==============================================================================
 
 
-(use-modules (dbi dbi))
-(use-modules (grsp grsp0))
-(use-modules (gexsys gexsys0))
+; Required modules.
+(use-modules (dbi dbi)
+	     (grsp grsp0)
+	     (gexsys gexsys0))
 
 
 ; Welcome.
@@ -93,9 +94,6 @@
 (set! it "plan-desc")
 (kb-insert-facts dbms kb1 tb1 co st it v p f3)
 (kb-insert-facts dbms kb1 tb2 co st it v p f3)
-
-
-
 
 
 ; Now we will inser some facts that will describe the following graph:
