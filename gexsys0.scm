@@ -35,6 +35,7 @@
 	    kb-create-sde-mem-facts
 	    kb-create-sde-prg-rules
 	    kb-create-sde-rules
+	    kb-create-sde-experiments
 	    kb-query
 	    kb-insert-facts
 	    kb-insert-default-facts
@@ -443,7 +444,28 @@
               Prob        REAL    CONSTRAINT prob_def_val DEFAULT (1) CONSTRAINT prob_bet_0_1 CHECK (Prob >= 0 AND Prob <= 1) );
               ")
     (dbi-close db-obj)))
-    
+
+
+; kb-create-sde-experiments - creates a table to hold experimental data as
+; a string that might later be passed to tables of the kb such as sde_facts.
+;					;
+; Arguments:
+; - p_dbms: database management system to be used.
+; - p_kb1: knowledge base name.
+;
+(define (kb-create-sde-experiments p_dbms p_kb1)
+  (let ((db-obj (dbi-open p_dbms p_kb1)))
+    (dbi-query db-obj "DROP TABLE IF EXISTS sde_experiments;")
+    (dbi-query db-obj "CREATE TABLE sde_experiments (
+              Id        INTEGER PRIMARY KEY ASC ON CONFLICT ROLLBACK AUTOINCREMENT UNIQUE ON CONFLICT ROLLBACK,
+              Context   TEXT        DEFAULT main,
+              Status    TEXT        DEFAULT enabled,
+              Results   TEXT (1024) DEFAULT na,
+              Comments  TEXT (256)  DEFAULT na,
+              Timestamp DATETIME    DEFAULT (CURRENT_TIMESTAMP) );
+              ")
+    (dbi-close db-obj)))
+
 
 ; kb-query - Performs a single SQL query on closed knowledge base. Use dbi-query 
 ; directly if the database has been opened.

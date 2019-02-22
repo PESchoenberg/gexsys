@@ -62,9 +62,11 @@
 (define f3 1)
 
 
-; Creation
+; Creation of the kb
 (kb-create dbms kb1 f3)
 
+; Creation of tables not included in the basic kb.
+(kb-create-sde-experiments dbms kb1)
 
 ;Insert fact.
 (set! it "counter2")
@@ -156,6 +158,10 @@
 
 ; We would need this only if rules are stored as programs.
 (define tb4 "sde_mem_rules")
+
+
+; We would need this to gather data.
+(define tb5 "sde_experiments")
 
 
 ; Standard context value to indicate that a rule always resides on sde_rules
