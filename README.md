@@ -31,7 +31,9 @@ you would issue:
 
     sudo mkdir /usr/share/guile/site/2.0/gexsys
 
-    sudo cp *.scm -rv /usr/share/guile/site/2.0/gexsys
+    ****sudo cp *.scm -rv /usr/share/guile/site/2.0/gexsys
+
+    sudo cp *.scm -rv /usr/local/share/guile/site/2.2/gexsys
 
 and that will do the trick.
 
