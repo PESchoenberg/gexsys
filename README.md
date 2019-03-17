@@ -1,5 +1,7 @@
 # gexsys - Guile Expert Sysytem.
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.2596628.svg)](https://doi.org/10.5281/zenodo.2596628)
+
 
 ## Overview:
 
@@ -31,7 +33,9 @@ you would issue:
 
     sudo mkdir /usr/share/guile/site/2.0/gexsys
 
-    sudo cp *.scm -rv /usr/share/guile/site/2.0/gexsys
+    ****sudo cp *.scm -rv /usr/share/guile/site/2.0/gexsys
+
+    sudo cp *.scm -rv /usr/local/share/guile/site/2.2/gexsys
 
 and that will do the trick.
 
