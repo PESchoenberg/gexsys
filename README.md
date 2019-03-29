@@ -58,11 +58,11 @@ and filled with comments.
 
 ## Credits and Sources:
 
-* GNU Guile - https://www.gnu.org/software/guile/
+* GNU Guile - https://www.gnu.org/software/guile/ (LGPL-3.0 or later).
 
-* guile-dbi - https://github.com/eestrada/guile-dbi
+* guile-dbi - https://github.com/eestrada/guile-dbi (no license provided at present).
 
-* Sqlite.org - https://www.sqlite.org/index.html
+* Sqlite.org - https://www.sqlite.org/index.html (public domain).
 
 * URL of this project - https://github.com/PESchoenberg/gexsys.git
 
