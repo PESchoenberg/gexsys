@@ -65,7 +65,7 @@
 ; kb-df2db.
 ; - Creating tables using "CREATE TABLE..." SQL statements and later import
 ; your data.
-; - In some cases in which you will buld a system that does not use data sets
+; - In some cases in which you will build a system that does not use data sets
 ; to be processed in batch, you may use just the provided data tables.
 ;
 ; or both after using rkbCreate(...). The knowledge base will be created on
@@ -95,23 +95,17 @@
 	(a " ")
 	(c " ")
 	(d " "))
-
     (if (> p_f3 0)(ptit " " 1 1 "Creating tables..."))
     (kb-create-sde-facts p_dbms p_kb1)
     (kb-create-sde-mem-facts p_dbms p_kb1)
     (kb-create-sde-prg-rules p_dbms p_kb1)
     (kb-create-sde-rules p_dbms p_kb1)
-
     (if (> p_f3 0)(ptit " " 1 1 "Inserting default facts..."))
     (kb-insert-default-facts p_dbms p_kb1 tb1 tb2 co st p_f3)
-
     (if (> p_f3 0)(ptit " " 1 1 "Inserting primary rules..."))
     (kb-insert-sde-rules p_dbms p_kb1 p_f3)
-    
     (if (> p_f3 0)(ptit " " 1 1 "Inserting secondary rules...")) 
-    (kb-insert-sde-prg-rules p_dbms p_kb1 p_f3)
-  
-    ))
+    (kb-insert-sde-prg-rules p_dbms p_kb1 p_f3)))
 
 
 ; kb-insert-sde-rules - Inserts a batch of rules into sde_rules; in order  
@@ -173,9 +167,7 @@
     (set! c "SELECT Value FROM sde_facts WHERE Item = `counter1` AND Value = ( SELECT Value FROM sde_facts WHERE Item = `load-order-prg24` );")    
     (set! a "UPDATE sde_facts SET Value = ( SELECT Value FROM sde_facts WHERE Item = `cur-ver-prg24` ) WHERE Item = `mode-prg-load`;")
     (set! d "6- Load the current version of prg24 - batch program loader.")
-    (kb-insert-rules p_dbms p_kb1 tb co st c a d 1.0 p_f3) 
-    
-   ))
+    (kb-insert-rules p_dbms p_kb1 tb co st c a d 1.0 p_f3)))
 
 
 ; kb-insert-sde-prg-rules - Inserts secondary rules into sde_prg_rules; in order
@@ -231,8 +223,7 @@
     (set! a "DELETE FROM sde_rules WHERE Context LIKE `prg24.%`;")
     (set! d "4- Delete prg24 once init-ok >= 2.")
     (kb-insert-rules p_dbms p_kb1 tb co st c a d 1.0 p_f3) 
-
-    
+   
     ; prg1.0 performs several init chores.
     (set! co "prg1.0")
 
@@ -278,7 +269,6 @@
     (set! a "DELETE FROM sde_rules WHERE Context LIKE `prg1.%`;")
     (set! d "6- Delete prg1.")
     (kb-insert-rules p_dbms p_kb1 tb co st c a d 1.0 p_f3) 
-
     
     ; prg2.0 is the batch purge program. It deletes from sde_rules annything
     ; that doesn't belong to context prg0.% or itself, and after performing
@@ -286,7 +276,7 @@
     ; after deleting everything else can update the mode-prg-purge item.
     (set! co "prg2.0")    
 
-    ;Delete all programs that are not co if mode purge is on. **********************************************
+    ;Delete all programs that are not co if mode purge is on. **
     (set! c "SELECT Value FROM sde_facts WHERE Item = `mode-prg-purge` AND Value = 1;")
     ;(set! a (strings-append (list "DELETE FROM sde_rules WHERE ( Context NOT LIKE `prg0.%` AND Context NOT LIKE `prg3.%` );") 0))
     (set! a "DELETE FROM sde_rules WHERE ( Context NOT LIKE `prg0.%` AND Context NOT LIKE `prg2.%` );")
@@ -316,9 +306,7 @@
     (set! c "SELECT Value FROM sde_facts WHERE Item = `mode-prg-purge` AND Value >= 0;")
     (set! a "DELETE FROM sde_rules WHERE Context LIKE `prg2.%`;")
     (set! d "5- Delete prg2.")
-    (kb-insert-rules p_dbms p_kb1 tb co st c a d 1.0 p_f3)    
-    
-    ))
+    (kb-insert-rules p_dbms p_kb1 tb co st c a d 1.0 p_f3)))
 
 
 ; kb-create-sde-facts - creates table sde_facts.
@@ -448,7 +436,7 @@
 
 ; kb-create-sde-experiments - creates a table to hold experimental data as
 ; a string that might later be passed to tables of the kb such as sde_facts.
-;					;
+; 
 ; Arguments:
 ; - p_dbms: database management system to be used.
 ; - p_kb1: knowledge base name.
@@ -599,9 +587,7 @@
     (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st "load-order-prg24" 0.0 1.0 p_f3)
     (kb-insert-facts p_dbms p_kb1 p_tb2 p_co p_st "load-order-prg24" 2.0 1.0 p_f3)
     (kb-insert-facts p_dbms p_kb1 p_tb1 p_co p_st "last-exec-prg24" 0.0 1.0 p_f3)
-    (kb-insert-facts p_dbms p_kb1 p_tb2 p_co p_st "last-exec-prg24" 0.0 1.0 p_f3)
-
-    )
+    (kb-insert-facts p_dbms p_kb1 p_tb2 p_co p_st "last-exec-prg24" 0.0 1.0 p_f3))
 
 
 
@@ -696,7 +682,7 @@
 ; 'getfromnetwork'. Interaction with the database should be direct from the 
 ; external module to the kb setting status to 'getfromnetwork'. On each 
 ; iteration, data passed to the kb using this status will be 'aligned' with the 
-; rest of the data by applying stauts 'applykbrules' to it.
+; rest of the data by applying status 'applykbrules' to it.
 ;
 ; Arguments:
 ; - p_dbms: database management system to be used.
@@ -831,9 +817,5 @@
       (dbi-close db-obj)
       (write (dbi-get_row db-obj))
       (newline))))
-      
-
-
-
 
 

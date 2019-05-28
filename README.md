@@ -33,7 +33,9 @@ you would issue:
 
     sudo mkdir /usr/share/guile/site/2.0/gexsys
 
-    ****sudo cp *.scm -rv /usr/share/guile/site/2.0/gexsys
+    sudo cp *.scm -rv /usr/share/guile/site/2.0/gexsys
+
+    or
 
     sudo cp *.scm -rv /usr/local/share/guile/site/2.2/gexsys
 
@@ -65,6 +67,8 @@ and filled with comments.
 * Sqlite.org - https://www.sqlite.org/index.html (public domain).
 
 * URL of this project - https://github.com/PESchoenberg/gexsys.git
+
+Please let me know if I forgot to add any credits or sources.
 
 
 ## License:
